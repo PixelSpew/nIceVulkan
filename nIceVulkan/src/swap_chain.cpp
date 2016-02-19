@@ -2,21 +2,15 @@
 #include "swap_chain.h"
 
 using namespace std;
-using namespace nif;
 
 namespace nif
 {
-	swap_chain::swap_chain(const instance &instance, const device &device, HINSTANCE platformHandle, HWND platformWindow)
-		: instance_(instance), device_(device)
+	swap_chain::swap_chain(const instance &instance, const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
+		: instance_(instance), device_(device), surface_(instance, platformHandle, platformWindow)
 	{
-		vk::Win32SurfaceCreateInfoKHR surfaceCreateInfo;
-		surfaceCreateInfo.hinstance(platformHandle);
-		surfaceCreateInfo.hwnd(platformWindow);
-		vk::createWin32SurfaceKHR(instance.handle(), &surfaceCreateInfo, nullptr, &surface);
-
 		// Get queue properties
 		uint32_t queueCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, NULL);
+		vkGetPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, nullptr);
 
 		std::vector<vk::QueueFamilyProperties> queueProps(queueCount);
 		vk::getPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, queueProps.data());
@@ -24,7 +18,7 @@ namespace nif
 		// Iterate over each queue to learn whether it supports presenting:
 		std::vector<vk::Bool32> supportsPresent(queueCount);
 		for (uint32_t i = 0; i < queueCount; i++)
-			vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, surface, &supportsPresent[i]);
+			vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, surface_.handle(), &supportsPresent[i]);
 
 		// Search for a graphics and a present queue in the array of queue
 		// families, try to find one that supports both
@@ -70,14 +64,14 @@ namespace nif
 			// todo : error message
 		}
 
-		queueNodeIndex = presentQueueNodeIndex;
+		queue_node_index_ = presentQueueNodeIndex;
 
 		// Get list of supported formats
 		uint32_t formatCount;
-		vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface, &formatCount, nullptr);
+		vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, nullptr);
 
 		std::vector<vk::SurfaceFormatKHR> surfFormats(formatCount);
-		vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface, &formatCount, surfFormats.data());
+		vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, surfFormats.data());
 
 		// If the format list includes just one entry of VK_FORMAT_UNDEFINED,
 		// the surface has no preferred format.  Otherwise, at least one
@@ -93,103 +87,18 @@ namespace nif
 	{
 	}
 
-	vk::ImageMemoryBarrier imageMemoryBarrier()
-	{
-		vk::ImageMemoryBarrier imageMemoryBarrier;
-		imageMemoryBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		imageMemoryBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		return imageMemoryBarrier;
-	}
-
-	void setImageLayout(vk::CommandBuffer cmdbuffer, vk::Image image, vk::ImageAspectFlags aspectMask, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
-	{
-		// Create an image barrier object
-		vk::ImageMemoryBarrier imgMemBarrier = imageMemoryBarrier();
-		imgMemBarrier.oldLayout(oldImageLayout);
-		imgMemBarrier.newLayout(newImageLayout);
-		imgMemBarrier.image(image);
-		imgMemBarrier.subresourceRange(vk::ImageSubresourceRange(aspectMask, 0, 1, 0, 1));
-
-		// Source layouts (old)
-
-		// Undefined layout
-		// Only allowed as initial layout!
-		// Make sure any writes to the image have been finished
-		if (oldImageLayout == vk::ImageLayout::eUndefined)
-			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite);
-
-		// Old layout is color attachment
-		// Make sure any writes to the color buffer have been finished
-		if (oldImageLayout == vk::ImageLayout::eColorAttachmentOptimal)
-			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-
-		// Old layout is transfer source
-		// Make sure any reads from the image have been finished
-		if (oldImageLayout == vk::ImageLayout::eTransferSrcOptimal)
-			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eTransferRead);
-
-		// Old layout is shader read (sampler, input attachment)
-		// Make sure any shader reads from the image have been finished
-		if (oldImageLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
-			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eShaderRead);
-
-		// Target layouts (new)
-
-		// New layout is transfer destination (copy, blit)
-		// Make sure any copyies to the image have been finished
-		if (newImageLayout == vk::ImageLayout::eTransferDstOptimal)
-			imgMemBarrier.dstAccessMask(vk::AccessFlagBits::eTransferWrite);
-
-		// New layout is transfer source (copy, blit)
-		// Make sure any reads from and writes to the image have been finished
-		if (newImageLayout == vk::ImageLayout::eTransferSrcOptimal)
-		{
-			imgMemBarrier.srcAccessMask(imgMemBarrier.srcAccessMask() | vk::AccessFlagBits::eTransferRead);
-			imgMemBarrier.dstAccessMask(vk::AccessFlagBits::eTransferRead);
-		}
-
-		// New layout is color attachment
-		// Make sure any writes to the color buffer hav been finished
-		if (newImageLayout == vk::ImageLayout::eColorAttachmentOptimal)
-		{
-			imgMemBarrier.dstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eTransferRead);
-		}
-
-		// New layout is depth attachment
-		// Make sure any writes to depth/stencil buffer have been finished
-		if (newImageLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
-			imgMemBarrier.dstAccessMask(imgMemBarrier.dstAccessMask() | vk::AccessFlagBits::eDepthStencilAttachmentWrite);
-
-		// New layout is shader read (sampler, input attachment)
-		// Make sure any writes to the image have been finished
-		if (newImageLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
-		{
-			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite);
-			imgMemBarrier.dstAccessMask(vk::AccessFlagBits::eShaderRead);
-		}
-
-
-		// Put barrier on top
-		vk::PipelineStageFlags srcStageFlags = vk::PipelineStageFlagBits::eTopOfPipe;
-		vk::PipelineStageFlags destStageFlags = vk::PipelineStageFlagBits::eTopOfPipe;
-
-		// Put barrier inside setup command buffer
-		vk::cmdPipelineBarrier(cmdbuffer, srcStageFlags, destStageFlags, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
-	}
-
 	void swap_chain::setup(VkCommandBuffer cmdBuffer, uint32_t * width, uint32_t * height)
 	{
 		// Get physical device surface properties and formats
 		vk::SurfaceCapabilitiesKHR surfCaps;
-		vk::getPhysicalDeviceSurfaceCapabilitiesKHR(device_.physical_handle(), surface, &surfCaps);
+		vk::getPhysicalDeviceSurfaceCapabilitiesKHR(device_.physical_handle(), surface_.handle(), &surfCaps);
 
 		uint32_t presentModeCount;
-		vk::getPhysicalDeviceSurfacePresentModesKHR(device_.physical_handle(), surface, &presentModeCount, NULL);
+		vk::getPhysicalDeviceSurfacePresentModesKHR(device_.physical_handle(), surface_.handle(), &presentModeCount, NULL);
 
 		// todo : replace with vector?
 		vector<vk::PresentModeKHR> presentModes(presentModeCount);
-		vk::getPhysicalDeviceSurfacePresentModesKHR(device_.physical_handle(), surface, &presentModeCount, presentModes.data());
+		vk::getPhysicalDeviceSurfacePresentModesKHR(device_.physical_handle(), surface_.handle(), &presentModeCount, presentModes.data());
 
 		vk::Extent2D swapchainExtent;
 		// width and height are either both -1, or both not -1.
@@ -239,7 +148,7 @@ namespace nif
 
 		vk::SwapchainKHR oldSwapchain = swapChain;
 		vk::SwapchainCreateInfoKHR swapchainCI;
-		swapchainCI.surface(surface);
+		swapchainCI.surface(surface_.handle());
 		swapchainCI.minImageCount(desiredNumberOfSwapchainImages);
 		swapchainCI.imageFormat(colorFormat);
 		swapchainCI.imageColorSpace(colorSpace);
@@ -263,13 +172,13 @@ namespace nif
 			vk::destroySwapchainKHR(device_.handle(), oldSwapchain, nullptr);
 		}
 
-		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &imageCount, NULL);
+		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, NULL);
 
-		swapchainImages.resize(imageCount);
-		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &imageCount, swapchainImages.data());
+		swapchainImages.resize(image_count_);
+		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, swapchainImages.data());
 
-		buffers.resize(imageCount);
-		for (uint32_t i = 0; i < imageCount; i++)
+		buffers_.resize(image_count_);
+		for (uint32_t i = 0; i < image_count_; i++)
 		{
 			vk::ImageViewCreateInfo colorAttachmentView;
 			colorAttachmentView.format(colorFormat);
@@ -277,13 +186,13 @@ namespace nif
 			colorAttachmentView.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 			colorAttachmentView.viewType(vk::ImageViewType::e2D);
 
-			buffers[i].image = swapchainImages[i];
+			buffers_[i].image = swapchainImages[i];
 
-			setImageLayout(cmdBuffer, buffers[i].image, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eUndefined, static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+			setImageLayout(cmdBuffer, buffers_[i].image, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eUndefined, static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
 
-			colorAttachmentView.image(buffers[i].image);
+			colorAttachmentView.image(buffers_[i].image);
 
-			vk::createImageView(device_.handle(), &colorAttachmentView, nullptr, &buffers[i].view);
+			vk::createImageView(device_.handle(), &colorAttachmentView, nullptr, &buffers_[i].view);
 		}
 	}
 
@@ -303,11 +212,30 @@ namespace nif
 
 	void swap_chain::cleanup()
 	{
-		for (uint32_t i = 0; i < imageCount; i++)
+		for (uint32_t i = 0; i < image_count_; i++)
 		{
-			vk::destroyImageView(device_.handle(), buffers[i].view, nullptr);
+			vk::destroyImageView(device_.handle(), buffers_[i].view, nullptr);
 		}
 		vk::destroySwapchainKHR(device_.handle(), swapChain, nullptr);
-		vk::destroySurfaceKHR(instance_.handle(), surface, nullptr);
+	}
+
+	uint32_t swap_chain::image_count() const
+	{
+		return image_count_;
+	}
+
+	uint32_t swap_chain::queue_node_index() const
+	{
+		return queue_node_index_;
+	}
+
+	std::vector<swap_chain_buffer> swap_chain::buffers() const
+	{
+		return buffers_;
+	}
+
+	const device& swap_chain::parent_device() const
+	{
+		return device_;
 	}
 }

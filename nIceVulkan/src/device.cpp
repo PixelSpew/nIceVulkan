@@ -38,6 +38,19 @@ namespace nif
 		deviceCreateInfo.ppEnabledExtensionNames(extensions.data());
 
 		vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_);
+
+		//get depth format
+		std::vector<vk::Format> depthFormats = { vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm };
+		for (auto& format : depthFormats)
+		{
+			vk::FormatProperties formatProps;
+			vk::getPhysicalDeviceFormatProperties(physical_handle_, format, &formatProps);
+			if (formatProps.optimalTilingFeatures() & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+			{
+				depth_format_ = format;
+				break;
+			}
+		}
 	}
 
 	device::~device()
@@ -58,5 +71,9 @@ namespace nif
 	const vk::PhysicalDeviceMemoryProperties& device::memory_properties() const
 	{
 		return memory_properties_;
+	}
+	vk::Format device::depth_format() const
+	{
+		return depth_format_;
 	}
 }

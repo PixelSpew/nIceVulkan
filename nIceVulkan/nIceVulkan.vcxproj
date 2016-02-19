@@ -149,7 +149,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\buffer.h" />
+    <ClInclude Include="inc\command_buffer.h" />
+    <ClInclude Include="inc\command_pool.h" />
     <ClInclude Include="inc\device.h" />
+    <ClInclude Include="inc\framebuffer.h" />
+    <ClInclude Include="inc\gpu_memory.h" />
+    <ClInclude Include="inc\image.h" />
+    <ClInclude Include="inc\image_view.h" />
     <ClInclude Include="inc\instance.h" />
     <ClInclude Include="inc\math\irec.h" />
     <ClInclude Include="inc\math\ivec2.h" />
@@ -159,14 +165,25 @@
     <ClInclude Include="inc\math\vec2.h" />
     <ClInclude Include="inc\math\vec3.h" />
     <ClInclude Include="inc\math\vec4.h" />
+    <ClInclude Include="inc\render_pass.h" />
     <ClInclude Include="inc\swap_chain.h" />
+    <ClInclude Include="inc\util\linq.h" />
     <ClInclude Include="inc\vulkan\vk_cpp.h" />
     <ClInclude Include="inc\vulkan\vk_platform.h" />
     <ClInclude Include="inc\vulkan\vulkan.h" />
+    <ClInclude Include="inc\window.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\framebuffer.cpp" />
+    <ClCompile Include="src\image_view.cpp" />
+    <ClCompile Include="src\gpu_memory.cpp" />
+    <ClCompile Include="src\image.cpp" />
+    <ClCompile Include="src\command_buffer.cpp" />
+    <ClCompile Include="src\command_pool.cpp" />
+    <ClCompile Include="src\render_pass.cpp" />
+    <ClCompile Include="src\window.cpp" />
     <ClCompile Include="src\swap_chain.cpp" />
     <ClCompile Include="src\buffer.cpp" />
     <ClCompile Include="src\device.cpp" />

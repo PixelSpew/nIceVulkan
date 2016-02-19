@@ -15,6 +15,7 @@ namespace nif
 		vec4 row(int idx);
 
 	public:
+		static mat4 identity();
 		static mat4 translation(const vec3 &val);
 		static mat4 rotation(const quat &val);
 		static mat4 rotation(const vec4 &axisAngle);

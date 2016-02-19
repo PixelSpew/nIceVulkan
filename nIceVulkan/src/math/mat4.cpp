@@ -17,6 +17,16 @@ namespace nif
 		return vec4(cols[0][idx], cols[1][idx], cols[2][idx], cols[3][idx]);
 	}
 
+	mat4 mat4::identity()
+	{
+		return mat4(
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		);
+	}
+
 	mat4 mat4::translation(const vec3 &val)
 	{
 		return mat4(

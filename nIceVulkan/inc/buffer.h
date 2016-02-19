@@ -12,6 +12,8 @@ namespace nif
 		std::vector<vk::VertexInputAttributeDescription>& attrib_descs();
 		vk::PipelineVertexInputStateCreateInfo& pipeline_info();
 
+		static vk::Bool32 getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties, uint32_t typeIndex);
+
 	protected:
 		ibuffer(const device &device, const vk::BufferUsageFlags flags, const void* data, const size_t size);
 		~ibuffer();
@@ -21,7 +23,7 @@ namespace nif
 
 		const device &device_;
 		vk::Buffer handle_;
-		vk::DeviceMemory memhandle_;
+		gpu_memory gpumem_;
 		vk::PipelineVertexInputStateCreateInfo pipeline_info_;
 		std::vector<vk::VertexInputBindingDescription> bind_descs_;
 		std::vector<vk::VertexInputAttributeDescription> attrib_descs_;
