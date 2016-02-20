@@ -7,7 +7,7 @@ using namespace std;
 namespace nif
 {
 	ibuffer::ibuffer(const device &device, const vk::BufferUsageFlags flags, const void *data, const size_t size)
-		: device_(device)
+		: device_(device), size_(size)
 	{
 		vk::BufferCreateInfo bufInfo;
 		bufInfo.size(static_cast<vk::DeviceSize>(size));
@@ -26,28 +26,13 @@ namespace nif
 		vk::destroyBuffer(device_.handle(), handle_, nullptr);
 	}
 
-	std::vector<vk::VertexInputBindingDescription>& ibuffer::bind_descs()
-	{
-		return bind_descs_;
-	}
-
-	const std::vector<vk::VertexInputBindingDescription>& ibuffer::bind_descs() const
-	{
-		return bind_descs_;
-	}
-
-	std::vector<vk::VertexInputAttributeDescription>& ibuffer::attrib_descs()
-	{
-		return attrib_descs_;
-	}
-
-	vk::PipelineVertexInputStateCreateInfo& ibuffer::pipeline_info()
-	{
-		return pipeline_info_;
-	}
-
 	vk::Buffer ibuffer::handle() const
 	{
 		return handle_;
+	}
+
+	size_t ibuffer::size() const
+	{
+		return size_;
 	}
 }

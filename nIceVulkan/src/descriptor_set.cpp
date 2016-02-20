@@ -25,7 +25,7 @@ namespace nif
 		vk::DescriptorBufferInfo descriptor;
 		descriptor.buffer(buffer.handle());
 		descriptor.offset(0);
-		descriptor.range(buffer.bind_descs()[0].stride());
+		descriptor.range(static_cast<vk::DeviceSize>(buffer.size()));
 
 		vk::WriteDescriptorSet writeDescriptorSet;
 		writeDescriptorSet.dstSet(handles_[0]);

@@ -19,6 +19,32 @@ using namespace nif;
 struct vertex
 {
 	vec3 pos;
+
+	static const vector<vk::VertexInputBindingDescription>& binding_descriptions()
+	{
+		static const vector<vk::VertexInputBindingDescription> bindDescs =
+		{
+			vk::VertexInputBindingDescription(0, sizeof(vertex), vk::VertexInputRate::eVertex)
+		};
+
+		return bindDescs;
+	}
+
+	static const vector<vk::VertexInputAttributeDescription>& attribute_descriptions()
+	{
+		static const vector<vk::VertexInputAttributeDescription> attribDescs =
+		{
+			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, 0)
+		};
+
+		return attribDescs;
+	}
+
+	static const vk::PipelineVertexInputStateCreateInfo& pipeline_info()
+	{
+		static const vk::PipelineVertexInputStateCreateInfo pipelineInfo( 0, 1, binding_descriptions().data(), 1, attribute_descriptions().data());
+		return pipelineInfo;
+	}
 };
 
 int exit(string message)
@@ -35,21 +61,8 @@ int main()
 
 	instance vkinstance("nIce Framework");
 	device vkdevice(vkinstance);
-	buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
+	vertex_buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
 	buffer<uint32_t> ibuffer(vkdevice, vk::BufferUsageFlagBits::eIndexBuffer, indices);
-
-	vbuffer.bind_descs().resize(1);
-	vbuffer.bind_descs()[0].stride(sizeof(vertex));
-
-	vbuffer.attrib_descs().resize(1);
-	vbuffer.attrib_descs()[0].location(0);
-	vbuffer.attrib_descs()[0].format(vk::Format::eR32G32B32Sfloat);
-	vbuffer.attrib_descs()[0].offset(0);
-
-	vbuffer.pipeline_info().vertexBindingDescriptionCount(static_cast<uint32_t>(vbuffer.bind_descs().size()));
-	vbuffer.pipeline_info().pVertexBindingDescriptions(vbuffer.bind_descs().data());
-	vbuffer.pipeline_info().vertexAttributeDescriptionCount(static_cast<uint32_t>(vbuffer.attrib_descs().size()));
-	vbuffer.pipeline_info().pVertexAttributeDescriptions(vbuffer.attrib_descs().data());
 
 	window win;
 	render_pass renderpass(vkdevice);
