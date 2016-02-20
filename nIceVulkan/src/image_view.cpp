@@ -3,13 +3,13 @@
 
 namespace nif
 {
-	image_view::image_view(const image &image)
+	image_view::image_view(const image &image, const vk::Format format, vk::ImageAspectFlags aspectFlags)
 		: device_(image.parent_device())
 	{
 		vk::ImageViewCreateInfo depthStencilView;
 		depthStencilView.viewType(vk::ImageViewType::e2D);
-		depthStencilView.format(device_.depth_format());
-		depthStencilView.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1));
+		depthStencilView.format(format);
+		depthStencilView.subresourceRange(vk::ImageSubresourceRange(aspectFlags, 0, 1, 0, 1));
 		depthStencilView.image(image.handle());
 		vk::createImageView(device_.handle(), &depthStencilView, nullptr, &handle_);
 	}

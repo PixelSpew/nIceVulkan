@@ -10,7 +10,7 @@ namespace nif
 		cmdPoolInfo.queueFamilyIndex(swap.queue_node_index());
 		cmdPoolInfo.flags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
-		vk::createCommandPool(swap.parent_device.handle(), &cmdPoolInfo, nullptr, &handle_);
+		vk::createCommandPool(swap.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_);
 	}
 
 	command_pool::~command_pool()

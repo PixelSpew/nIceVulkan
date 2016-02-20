@@ -12,7 +12,12 @@ namespace nif
 		vk::Image handle() const;
 		const device& parent_device() const;
 
+		static image wrap(const device &device, const vk::Image handle);
+
 	private:
+		image(const device &device, const vk::Image handle);
+		image(const image& image);
+
 		vk::Image handle_;
 		std::unique_ptr<gpu_memory> gpumem_;
 		const device &device_;

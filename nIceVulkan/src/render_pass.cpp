@@ -18,7 +18,7 @@ namespace nif
 		attachments[0].initialLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		attachments[0].finalLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
-		attachments[1].format = device.depth_format();
+		attachments[1].format(device.depth_format());
 		attachments[1].samples(vk::SampleCountFlagBits::e1);
 		attachments[1].loadOp(vk::AttachmentLoadOp::eClear);
 		attachments[1].storeOp(vk::AttachmentStoreOp::eStore);

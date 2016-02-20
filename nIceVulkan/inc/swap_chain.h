@@ -1,19 +1,22 @@
 #pragma once
-#include "image.h"
+#include "image_view.h"
 #include "win32_surface.h"
 #include "vulkan/vk_cpp.h"
 #include <vector>
 
 namespace nif
 {
-	struct swap_chain_buffer
-	{
-		vk::Image image;
-		vk::ImageView view;
-	};
-
 	class swap_chain
 	{
+	public:
+		struct buffer
+		{
+			buffer(const device &device, const vk::Image imghandle, const vk::Format format);
+
+			std::unique_ptr<image> image;
+			image_view view;
+		};
+
 	public:
 		swap_chain(const instance &instance, const device &device, const HINSTANCE platformHandle, const HWND platformWindow);
 		~swap_chain();
@@ -25,19 +28,17 @@ namespace nif
 
 		uint32_t image_count() const;
 		uint32_t queue_node_index() const;
-		std::vector<swap_chain_buffer> buffers() const;
+		const std::vector<buffer>& buffers() const;
 		const device& parent_device() const;
 
 	private:
 		win32_surface surface_;
 		vk::Format colorFormat;
 		vk::ColorSpaceKHR colorSpace;
-		std::vector<image> swapchain_images_;
-		std::vector<vk::Image> swapchainImages;
 		vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
 
 		uint32_t image_count_;
-		std::vector<swap_chain_buffer> buffers_;
+		std::vector<buffer> buffers_;
 		uint32_t queue_node_index_ = UINT32_MAX;
 		const device &device_;
 		const instance &instance_;

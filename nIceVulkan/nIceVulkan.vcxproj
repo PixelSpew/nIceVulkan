@@ -151,6 +151,9 @@
     <ClInclude Include="inc\buffer.h" />
     <ClInclude Include="inc\command_buffer.h" />
     <ClInclude Include="inc\command_pool.h" />
+    <ClInclude Include="inc\descriptor_pool.h" />
+    <ClInclude Include="inc\descriptor_set.h" />
+    <ClInclude Include="inc\descriptor_set_layout.h" />
     <ClInclude Include="inc\device.h" />
     <ClInclude Include="inc\framebuffer.h" />
     <ClInclude Include="inc\gpu_memory.h" />
@@ -165,17 +168,24 @@
     <ClInclude Include="inc\math\vec2.h" />
     <ClInclude Include="inc\math\vec3.h" />
     <ClInclude Include="inc\math\vec4.h" />
+    <ClInclude Include="inc\pipeline_layout.h" />
     <ClInclude Include="inc\render_pass.h" />
     <ClInclude Include="inc\swap_chain.h" />
     <ClInclude Include="inc\util\linq.h" />
     <ClInclude Include="inc\vulkan\vk_cpp.h" />
     <ClInclude Include="inc\vulkan\vk_platform.h" />
     <ClInclude Include="inc\vulkan\vulkan.h" />
+    <ClInclude Include="inc\win32_surface.h" />
     <ClInclude Include="inc\window.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\descriptor_set.cpp" />
+    <ClCompile Include="src\descriptor_pool.cpp" />
+    <ClCompile Include="src\descriptor_set_layout.cpp" />
+    <ClCompile Include="src\pipeline_layout.cpp" />
+    <ClCompile Include="src\win32_surface.cpp" />
     <ClCompile Include="src\framebuffer.cpp" />
     <ClCompile Include="src\image_view.cpp" />
     <ClCompile Include="src\gpu_memory.cpp" />

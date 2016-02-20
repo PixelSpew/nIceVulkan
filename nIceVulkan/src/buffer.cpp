@@ -2,6 +2,8 @@
 #include "buffer.h"
 #include "gpu_memory.h"
 
+using namespace std;
+
 namespace nif
 {
 	ibuffer::ibuffer(const device &device, const vk::BufferUsageFlags flags, const void *data, const size_t size)
@@ -15,8 +17,8 @@ namespace nif
 
 		vk::MemoryRequirements memreq;
 		vk::getBufferMemoryRequirements(device.handle(), handle_, &memreq);
-		gpumem_ = gpu_memory(device, memreq, vk::MemoryPropertyFlagBits::eHostVisible, data);
-		vk::bindBufferMemory(device.handle(), handle_, gpumem_.handle(), 0);
+		gpumem_ = unique_ptr<gpu_memory>(new gpu_memory(device, memreq, vk::MemoryPropertyFlagBits::eHostVisible, data));
+		vk::bindBufferMemory(device.handle(), handle_, gpumem_->handle(), 0);
 	}
 
 	ibuffer::~ibuffer()
@@ -29,6 +31,11 @@ namespace nif
 		return bind_descs_;
 	}
 
+	const std::vector<vk::VertexInputBindingDescription>& ibuffer::bind_descs() const
+	{
+		return bind_descs_;
+	}
+
 	std::vector<vk::VertexInputAttributeDescription>& ibuffer::attrib_descs()
 	{
 		return attrib_descs_;
@@ -37,5 +44,10 @@ namespace nif
 	vk::PipelineVertexInputStateCreateInfo& ibuffer::pipeline_info()
 	{
 		return pipeline_info_;
+	}
+
+	vk::Buffer ibuffer::handle() const
+	{
+		return handle_;
 	}
 }

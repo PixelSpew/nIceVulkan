@@ -27,7 +27,8 @@ namespace nif
 
 	image::~image()
 	{
-		vk::destroyImage(device_.handle(), handle_, nullptr);
+		if (gpumem_)	// if the handle is managed externally, gpumem_ will be empty
+			vk::destroyImage(device_.handle(), handle_, nullptr);
 	}
 
 	vk::Image image::handle() const
@@ -37,5 +38,20 @@ namespace nif
 	const device& image::parent_device() const
 	{
 		return device_;
+	}
+
+	image image::wrap(const device &device, const vk::Image handle)
+	{
+		return image(device, handle);
+	}
+
+	image::image(const device &device, const vk::Image handle)
+		: device_(device), handle_(handle)
+	{
+	}
+
+	image::image(const image &image)
+		: handle_(image.handle_), device_(image.device_)
+	{
 	}
 }

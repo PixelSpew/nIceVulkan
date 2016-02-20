@@ -1,10 +1,16 @@
 #include "stdafx.h"
 #include "swap_chain.h"
+#include "util/linq.h"
 
 using namespace std;
 
 namespace nif
 {
+	swap_chain::buffer::buffer(const device &device, const vk::Image imghandle, const vk::Format format)
+		: image(&image::wrap(device, imghandle)), view(*image, format, vk::ImageAspectFlagBits::eColor)
+	{
+	}
+
 	swap_chain::swap_chain(const instance &instance, const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
 		: instance_(instance), device_(device), surface_(instance, platformHandle, platformWindow)
 	{
@@ -172,28 +178,12 @@ namespace nif
 			vk::destroySwapchainKHR(device_.handle(), oldSwapchain, nullptr);
 		}
 
-		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, NULL);
+		std::vector<vk::Image> imageHandles(image_count_);
+		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, imageHandles.data());
 
-		swapchainImages.resize(image_count_);
-		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, swapchainImages.data());
-
-		buffers_.resize(image_count_);
-		for (uint32_t i = 0; i < image_count_; i++)
-		{
-			vk::ImageViewCreateInfo colorAttachmentView;
-			colorAttachmentView.format(colorFormat);
-			colorAttachmentView.components(vk::ComponentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA));
-			colorAttachmentView.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-			colorAttachmentView.viewType(vk::ImageViewType::e2D);
-
-			buffers_[i].image = swapchainImages[i];
-
-			setImageLayout(cmdBuffer, buffers_[i].image, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eUndefined, static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
-
-			colorAttachmentView.image(buffers_[i].image);
-
-			vk::createImageView(device_.handle(), &colorAttachmentView, nullptr, &buffers_[i].view);
-		}
+		buffers_ = from(imageHandles)
+			.select<buffer>([&](auto x) { return buffer(device_, x, colorFormat); })
+			.to_vector();
 	}
 
 	vk::Result swap_chain::acquireNextImage(vk::Semaphore presentCompleteSemaphore, uint32_t * currentBuffer)
@@ -212,10 +202,7 @@ namespace nif
 
 	void swap_chain::cleanup()
 	{
-		for (uint32_t i = 0; i < image_count_; i++)
-		{
-			vk::destroyImageView(device_.handle(), buffers_[i].view, nullptr);
-		}
+		buffers_.clear();
 		vk::destroySwapchainKHR(device_.handle(), swapChain, nullptr);
 	}
 
@@ -229,7 +216,7 @@ namespace nif
 		return queue_node_index_;
 	}
 
-	std::vector<swap_chain_buffer> swap_chain::buffers() const
+	const vector<swap_chain::buffer>& swap_chain::buffers() const
 	{
 		return buffers_;
 	}

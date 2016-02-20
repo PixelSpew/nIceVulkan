@@ -1,5 +1,6 @@
 #pragma once
 #include "device.h"
+#include "gpu_memory.h"
 #include <vector>
 #include <memory>
 
@@ -9,10 +10,10 @@ namespace nif
 	{
 	public:
 		std::vector<vk::VertexInputBindingDescription>& bind_descs();
+		const std::vector<vk::VertexInputBindingDescription>& bind_descs() const;
 		std::vector<vk::VertexInputAttributeDescription>& attrib_descs();
 		vk::PipelineVertexInputStateCreateInfo& pipeline_info();
-
-		static vk::Bool32 getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties, uint32_t typeIndex);
+		vk::Buffer handle() const;
 
 	protected:
 		ibuffer(const device &device, const vk::BufferUsageFlags flags, const void* data, const size_t size);
@@ -23,7 +24,7 @@ namespace nif
 
 		const device &device_;
 		vk::Buffer handle_;
-		gpu_memory gpumem_;
+		std::unique_ptr<gpu_memory> gpumem_;
 		vk::PipelineVertexInputStateCreateInfo pipeline_info_;
 		std::vector<vk::VertexInputBindingDescription> bind_descs_;
 		std::vector<vk::VertexInputAttributeDescription> attrib_descs_;
