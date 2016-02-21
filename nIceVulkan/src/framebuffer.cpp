@@ -2,6 +2,8 @@
 #include "framebuffer.h"
 #include "util/linq.h"
 
+using namespace std;
+
 namespace nif
 {
 	framebuffer::framebuffer(const uint32_t width, const uint32_t height, const render_pass &pass, const std::initializer_list<std::reference_wrapper<const image_view>> views)
@@ -19,7 +21,8 @@ namespace nif
 		frameBufferCreateInfo.width(width);
 		frameBufferCreateInfo.height(height);
 		frameBufferCreateInfo.layers(1);
-		vk::createFramebuffer(pass.parent_device().handle(), &frameBufferCreateInfo, nullptr, &handle_);
+		if (vk::createFramebuffer(pass.parent_device().handle(), &frameBufferCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	framebuffer::~framebuffer()

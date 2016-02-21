@@ -14,7 +14,8 @@ namespace nif
 		allocateInfo.level(vk::CommandBufferLevel::ePrimary);
 		allocateInfo.commandBufferCount(1);
 
-		vk::allocateCommandBuffers(pool.parent_device().handle(), &allocateInfo, &handle_);
+		if (vk::allocateCommandBuffers(pool.parent_device().handle(), &allocateInfo, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	command_buffer::~command_buffer()
@@ -24,12 +25,14 @@ namespace nif
 
 	void command_buffer::begin()
 	{
-		vk::beginCommandBuffer(handle_, &begin_info_);
+		if (vk::beginCommandBuffer(handle_, &begin_info_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	void command_buffer::end()
 	{
-		vk::endCommandBuffer(handle_);
+		if (vk::endCommandBuffer(handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	void command_buffer::submit(const device &device)
@@ -40,7 +43,8 @@ namespace nif
 		submitInfo.commandBufferCount(1);
 		submitInfo.pCommandBuffers(&cmdbufferHandle);
 
-		vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE);
+		if (vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	void command_buffer::submit(const device &device, const semaphore &semaphore)
@@ -54,7 +58,8 @@ namespace nif
 		submitInfo.commandBufferCount(1);
 		submitInfo.pCommandBuffers(&cmdbufferHandle);
 
-		vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE);
+		if (vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	void command_buffer::begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height)

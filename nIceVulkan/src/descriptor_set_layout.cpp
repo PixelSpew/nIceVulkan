@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "descriptor_set_layout.h"
 
+using namespace std;
+
 namespace nif
 {
 	descriptor_set_layout::descriptor_set_layout(const device &device)
@@ -15,7 +17,8 @@ namespace nif
 		descriptorLayout.bindingCount(1);
 		descriptorLayout.pBindings(&layoutBinding);
 
-		vk::createDescriptorSetLayout(device.handle(), &descriptorLayout, NULL, &handle_);
+		if (vk::createDescriptorSetLayout(device.handle(), &descriptorLayout, NULL, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	descriptor_set_layout::~descriptor_set_layout()

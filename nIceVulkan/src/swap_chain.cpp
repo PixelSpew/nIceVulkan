@@ -11,15 +11,17 @@ namespace nif
 	{
 	}
 
-	swap_chain::swap_chain(const instance &instance, const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
-		: instance_(instance), device_(device), surface_(instance, platformHandle, platformWindow)
+	swap_chain::swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
+		: device_(device), surface_(device, platformHandle, platformWindow)
 	{
 		// Get list of supported formats
 		uint32_t formatCount;
-		vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, nullptr);
+		if (vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, nullptr) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		std::vector<vk::SurfaceFormatKHR> surfFormats(formatCount);
-		vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, surfFormats.data());
+		if (vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, surfFormats.data()) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		// If the format list includes just one entry of VK_FORMAT_UNDEFINED,
 		// the surface has no preferred format.  Otherwise, at least one
@@ -40,13 +42,16 @@ namespace nif
 		vk::SwapchainKHR oldSwapchain = swapChain;
 
 		vk::SurfaceCapabilitiesKHR surfCaps;
-		vk::getPhysicalDeviceSurfaceCapabilitiesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &surfCaps);
+		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &surfCaps) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		uint32_t presentModeCount;
-		vk::getPhysicalDeviceSurfacePresentModesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &presentModeCount, nullptr);
+		if (vk::getPhysicalDeviceSurfacePresentModesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &presentModeCount, nullptr) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		vector<vk::PresentModeKHR> presentModes(presentModeCount);
-		vk::getPhysicalDeviceSurfacePresentModesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &presentModeCount, presentModes.data());
+		if (vk::getPhysicalDeviceSurfacePresentModesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &presentModeCount, presentModes.data()) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		vk::Extent2D swapchainExtent;
 		if (surfCaps.currentExtent().width() == -1)
@@ -104,7 +109,8 @@ namespace nif
 		swapchainCI.clipped(VK_TRUE);
 		swapchainCI.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
 
-		vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &swapChain);
+		if (vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &swapChain) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		// If we just re-created an existing swapchain, we should destroy the old
 		// swapchain at this point.
@@ -113,10 +119,12 @@ namespace nif
 		if (oldSwapchain != VK_NULL_HANDLE)
 			vk::destroySwapchainKHR(device_.handle(), oldSwapchain, nullptr);
 
-		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, nullptr);
+		if (vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, nullptr) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		vector<vk::Image> swapchainImages(image_count_);
-		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, swapchainImages.data());
+		if (vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, swapchainImages.data()) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		buffers_.resize(image_count_);
 		for (uint32_t i = 0; i < image_count_; i++)
@@ -130,18 +138,20 @@ namespace nif
 		}
 	}
 
-	vk::Result swap_chain::acquireNextImage(const semaphore &semaphore, uint32_t *currentBuffer)
+	void swap_chain::acquireNextImage(const semaphore &semaphore, uint32_t *currentBuffer)
 	{
-		return vk::acquireNextImageKHR(device_.handle(), swapChain, UINT64_MAX, semaphore.handle(), nullptr, currentBuffer);
+		if (vk::acquireNextImageKHR(device_.handle(), swapChain, UINT64_MAX, semaphore.handle(), nullptr, currentBuffer) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
-	vk::Result swap_chain::queuePresent(uint32_t currentBuffer)
+	void swap_chain::queuePresent(uint32_t currentBuffer)
 	{
 		vk::PresentInfoKHR presentInfo;
 		presentInfo.swapchainCount(1);
 		presentInfo.pSwapchains(&swapChain);
 		presentInfo.pImageIndices(&currentBuffer);
-		return vk::queuePresentKHR(device_.queue(), &presentInfo);
+		if (vk::queuePresentKHR(device_.queue(), &presentInfo) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	void swap_chain::cleanup()

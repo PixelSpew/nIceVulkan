@@ -17,12 +17,14 @@ namespace nif
 		createInfo.samples(vk::SampleCountFlagBits::e1);
 		createInfo.tiling(vk::ImageTiling::eOptimal);
 		createInfo.usage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc);
-		vk::createImage(device.handle(), &createInfo, nullptr, &handle_);
+		if (vk::createImage(device.handle(), &createInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		vk::MemoryRequirements memreqs;
 		vk::getImageMemoryRequirements(device.handle(), handle_, &memreqs);
 		gpumem_ = unique_ptr<gpu_memory>(new gpu_memory(device, memreqs, vk::MemoryPropertyFlagBits::eDeviceLocal, nullptr));
-		vkBindImageMemory(device.handle(), handle_, gpumem_->handle(), 0);
+		if (vk::bindImageMemory(device.handle(), handle_, gpumem_->handle(), 0) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	image::image(const device &device, const vk::Image handle)

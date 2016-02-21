@@ -9,17 +9,19 @@ namespace nif
 	instance::instance(const string &name)
 	{
 		vk::ApplicationInfo appInfo;
-		appInfo.pApplicationName(name.c_str());
-		appInfo.pEngineName("nIce Framework");
-		appInfo.apiVersion(VK_API_VERSION);
+		appInfo.pApplicationName(name.c_str())
+			.pEngineName("nIce Framework")
+			.apiVersion(VK_API_VERSION);
 
 		vector<const char*> extensions = { VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME };
 		vk::InstanceCreateInfo instanceCreateInfo;
-		instanceCreateInfo.pApplicationInfo(&appInfo);
-		instanceCreateInfo.enabledExtensionCount(static_cast<uint32_t>(extensions.size()));
-		instanceCreateInfo.ppEnabledExtensionNames(extensions.data());
+		instanceCreateInfo
+			.pApplicationInfo(&appInfo)
+			.enabledExtensionCount(static_cast<uint32_t>(extensions.size()))
+			.ppEnabledExtensionNames(extensions.data());
 
-		vk::createInstance(&instanceCreateInfo, nullptr, &handle_);
+		if (vk::createInstance(&instanceCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	instance::~instance()

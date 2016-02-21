@@ -19,7 +19,8 @@ namespace nif
 		moduleCreateInfo.codeSize(pcode.size() * sizeof(uint32_t));
 		moduleCreateInfo.pCode(pcode.data());
 
-		vk::createShaderModule(device.handle(), &moduleCreateInfo, nullptr, &handle_);
+		if (vk::createShaderModule(device.handle(), &moduleCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	shader_module::~shader_module()

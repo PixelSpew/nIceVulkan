@@ -78,7 +78,8 @@ namespace nif
 		pipelineCreateInfo.pDepthStencilState(&depthStencilState);
 		pipelineCreateInfo.pDynamicState(&dynamicState);
 
-		vk::createGraphicsPipelines(pass.parent_device().handle(), cache.handle(), 1, &pipelineCreateInfo, nullptr, &handle_);
+		if (vk::createGraphicsPipelines(pass.parent_device().handle(), cache.handle(), 1, &pipelineCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	pipeline::~pipeline()

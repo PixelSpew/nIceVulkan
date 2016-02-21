@@ -9,7 +9,6 @@ namespace nif
 	render_pass::render_pass(const device &device)
 		: device_(device)
 	{
-
 		vk::AttachmentDescription attachments[2];
 		attachments[0].format(vk::Format::eB8G8R8A8Unorm);
 		attachments[0].samples(vk::SampleCountFlagBits::e1);
@@ -57,7 +56,8 @@ namespace nif
 		renderPassInfo.dependencyCount(0);
 		renderPassInfo.pDependencies(nullptr);
 
-		vk::createRenderPass(device.handle(), &renderPassInfo, nullptr, &handle_);
+		if (vk::createRenderPass(device.handle(), &renderPassInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	render_pass::~render_pass()

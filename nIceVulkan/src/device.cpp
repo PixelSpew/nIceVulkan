@@ -10,7 +10,8 @@ namespace nif
 		: instance_(instance)
 	{
 		uint32_t gpuCount;
-		vk::enumeratePhysicalDevices(instance.handle(), &gpuCount, &physical_handle_);
+		if (vk::enumeratePhysicalDevices(instance.handle(), &gpuCount, &physical_handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		uint32_t queueCount;
 		vk::getPhysicalDeviceQueueFamilyProperties(physical_handle_, &queueCount, nullptr);
@@ -38,7 +39,8 @@ namespace nif
 		deviceCreateInfo.enabledExtensionCount(static_cast<uint32_t>(extensions.size()));
 		deviceCreateInfo.ppEnabledExtensionNames(extensions.data());
 
-		vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_);
+		if (vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		//get depth format
 		std::vector<vk::Format> depthFormats = { vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm };
@@ -54,7 +56,7 @@ namespace nif
 		}
 
 		//get graphics queue
-		vkGetDeviceQueue(handle_, graphicsQueueIndex, 0, &queue_);
+		vk::getDeviceQueue(handle_, graphicsQueueIndex, 0, &queue_);
 	}
 
 	device::~device()
@@ -64,7 +66,8 @@ namespace nif
 
 	void device::wait_queue_idle()
 	{
-		vk::queueWaitIdle(queue_);
+		if (vk::queueWaitIdle(queue_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	vk::Device device::handle() const

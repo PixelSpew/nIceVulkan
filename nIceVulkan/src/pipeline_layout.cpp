@@ -18,7 +18,8 @@ namespace nif
 			.data()
 		);
 
-		vk::createPipelineLayout((*descSetLayouts.begin()).get().parent_device().handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_);
+		if (vk::createPipelineLayout((*descSetLayouts.begin()).get().parent_device().handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	pipeline_layout::~pipeline_layout()

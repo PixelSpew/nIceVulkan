@@ -1,13 +1,16 @@
 #include "stdafx.h"
 #include "semaphore.h"
 
+using namespace std;
+
 namespace nif
 {
 	semaphore::semaphore(const device &device)
 		: device_(device)
 	{
 		vk::SemaphoreCreateInfo createInfo;
-		vk::createSemaphore(device.handle(), &createInfo, nullptr, &handle_);
+		if (vk::createSemaphore(device.handle(), &createInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	semaphore::~semaphore()

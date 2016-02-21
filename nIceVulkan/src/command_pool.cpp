@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "command_pool.h"
 
+using namespace std;
+
 namespace nif
 {
 	command_pool::command_pool(const win32_surface &surface)
@@ -10,7 +12,8 @@ namespace nif
 		cmdPoolInfo.queueFamilyIndex(surface.queue_node_index());
 		cmdPoolInfo.flags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
-		vk::createCommandPool(surface.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_);
+		if (vk::createCommandPool(surface.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	command_pool::~command_pool()

@@ -1,13 +1,16 @@
 #include "stdafx.h"
 #include "pipeline_cache.h"
 
+using namespace std;
+
 namespace nif
 {
 	pipeline_cache::pipeline_cache(const device &device)
 		: device_(device)
 	{
 		vk::PipelineCacheCreateInfo pipelineCacheCreateInfo;
-		vk::createPipelineCache(device.handle(), &pipelineCacheCreateInfo, nullptr, &handle_);
+		if (vk::createPipelineCache(device.handle(), &pipelineCacheCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	pipeline_cache::~pipeline_cache()

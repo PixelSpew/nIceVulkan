@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "descriptor_pool.h"
 
+using namespace std;
+
 namespace nif
 {
 	descriptor_pool::descriptor_pool(const device &device)
@@ -15,7 +17,8 @@ namespace nif
 		descriptorPoolInfo.pPoolSizes(typeCounts);
 		descriptorPoolInfo.maxSets(1);
 
-		vk::createDescriptorPool(device.handle(), &descriptorPoolInfo, nullptr, &handle_);
+		if (vk::createDescriptorPool(device.handle(), &descriptorPoolInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	descriptor_pool::~descriptor_pool()

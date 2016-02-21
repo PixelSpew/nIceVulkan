@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "gpu_memory.h"
 
+using namespace std;
+
 namespace nif
 {
 	gpu_memory::gpu_memory(const device &device, const vk::MemoryRequirements &memreqs, const vk::MemoryPropertyFlags &memtype, const void *data)
@@ -25,12 +27,14 @@ namespace nif
 			typeBits >>= 1;
 		}
 
-		vk::allocateMemory(device.handle(), &mem_alloc, nullptr, &handle_);
+		if (vk::allocateMemory(device.handle(), &mem_alloc, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		if (data != nullptr)
 		{
 			void *memmap;
-			vk::mapMemory(device.handle(), handle_, 0, memreqs.size(), 0, &memmap);
+			if (vk::mapMemory(device.handle(), handle_, 0, memreqs.size(), 0, &memmap) != vk::Result::eVkSuccess)
+				throw runtime_error("fail");
 			memcpy(memmap, data, memreqs.size());
 			vk::unmapMemory(device.handle(), handle_);
 		}

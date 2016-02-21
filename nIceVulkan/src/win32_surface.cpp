@@ -12,19 +12,21 @@ namespace nif
 		vk::Win32SurfaceCreateInfoKHR surfaceCreateInfo;
 		surfaceCreateInfo.hinstance(platformHandle);
 		surfaceCreateInfo.hwnd(platformWindow);
-		vk::createWin32SurfaceKHR(device.parent_instance().handle(), &surfaceCreateInfo, nullptr, &handle_);
+		if (vk::createWin32SurfaceKHR(device.parent_instance().handle(), &surfaceCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 
 		//////////////
 
 		uint32_t queueCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, nullptr);
+		vk::getPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, nullptr);
 
 		std::vector<vk::QueueFamilyProperties> queueProps(queueCount);
 		vk::getPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, queueProps.data());
 
 		std::vector<vk::Bool32> supportsPresent(queueCount);
 		for (uint32_t i = 0; i < queueCount; i++)
-			vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, handle_, &supportsPresent[i]);
+			if (vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
+				throw runtime_error("fail");
 
 		uint32_t graphicsQueueNodeIndex = UINT32_MAX;
 		for (uint32_t i = 0; i < queueCount; i++)

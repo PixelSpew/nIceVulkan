@@ -53,7 +53,7 @@ int main()
 
 	window win;
 	render_pass renderpass(vkdevice);
-	swap_chain swap(vkinstance, vkdevice, win.hinstance(), win.hwnd());
+	swap_chain swap(vkdevice, win.hinstance(), win.hwnd());
 
 	command_pool cmdpool(swap.surface());
 	std::vector<unique_ptr<command_buffer>> drawCmdBuffers(swap.image_count());
