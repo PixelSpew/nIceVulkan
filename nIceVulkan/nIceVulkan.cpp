@@ -126,5 +126,6 @@ int main()
 		drawCmdBuffers[i]->draw_indexed(static_cast<uint32_t>(indices.size()));
 		drawCmdBuffers[i]->end_render_pass();
 		drawCmdBuffers[i]->pipeline_barrier(swap.buffers()[i]->image);
+		drawCmdBuffers[i]->end();
 	}
 }
