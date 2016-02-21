@@ -65,7 +65,10 @@ int main()
 	swap_chain swap(vkinstance, vkdevice, win.hinstance(), win.hwnd());
 
 	command_pool cmdpool(swap);
-	std::vector<command_buffer> drawCmdBuffers(swap.image_count(), command_buffer(cmdpool));
+	std::vector<unique_ptr<command_buffer>> drawCmdBuffers(swap.image_count());
+	for (unique_ptr<command_buffer> &drawCmdBuffer : drawCmdBuffers)
+		drawCmdBuffer = unique_ptr<command_buffer>(new command_buffer(cmdpool));
+
 	command_buffer postPresentCmdBuffer(cmdpool);
 	command_buffer setupCmdBuffer(cmdpool);
 	setupCmdBuffer.begin();
@@ -83,7 +86,7 @@ int main()
 
 	std::vector<unique_ptr<framebuffer>> framebuffers;
 	for (uint32_t i = 0; i < swap.image_count(); i++)
-		framebuffers.push_back(unique_ptr<framebuffer>(new framebuffer(win.width(), win.height(), renderpass, { swap.buffers()[i].view, *depthStencil.view })));
+		framebuffers.push_back(unique_ptr<framebuffer>(new framebuffer(win.width(), win.height(), renderpass, { swap.buffers()[i]->view, *depthStencil.view })));
 
 	descriptor_set_layout descriptorSetLayout(vkdevice);
 	pipeline_layout pipelineLayout({ descriptorSetLayout });
@@ -103,29 +106,25 @@ int main()
 	buffer<ubo_type> uboBuffer(vkdevice, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
 	descriptor_set descriptorSet({ descriptorSetLayout }, descriptorPool, uboBuffer);
 
-	vector<shader_module> shaderModules =
-	{
-		shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eVertex),
-		shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eFragment)
-	};
+	vector<unique_ptr<shader_module>> shaderModules(2);
+	shaderModules[0] = unique_ptr<shader_module>(new shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eVertex));
+	shaderModules[1] = unique_ptr<shader_module>(new shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eFragment));
+
 	pipeline_cache pipelineCache(vkdevice);
 	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, vertex::pipeline_info(), pipelineCache);
 
-	////////////
-
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
-		drawCmdBuffers[i].begin();
-		drawCmdBuffers[i].begin_render_pass(renderpass, *framebuffers[i], win.width(), win.height());
-		drawCmdBuffers[i].set_viewport(win.width(), win.height());
-		drawCmdBuffers[i].set_scissor(0, 0, win.width(), win.height());
-		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
-		drawCmdBuffers[i].bind_pipeline(solidPipeline);
-		drawCmdBuffers[i].bind_vertex_buffer(vbuffer);
-		drawCmdBuffers[i].bind_index_buffer(ibuffer);
-		drawCmdBuffers[i].draw_indexed(indices.size());
-		drawCmdBuffers[i].end_render_pass();
-		drawCmdBuffers[i].pipeline_barrier(*swap.buffers()[i].image);
+		drawCmdBuffers[i]->begin();
+		drawCmdBuffers[i]->begin_render_pass(renderpass, *framebuffers[i], win.width(), win.height());
+		drawCmdBuffers[i]->set_viewport(static_cast<float>(win.width()), static_cast<float>(win.height()));
+		drawCmdBuffers[i]->set_scissor(0, 0, win.width(), win.height());
+		drawCmdBuffers[i]->bind_descriptor_sets(pipelineLayout, descriptorSet);
+		drawCmdBuffers[i]->bind_pipeline(solidPipeline);
+		drawCmdBuffers[i]->bind_vertex_buffer(vbuffer);
+		drawCmdBuffers[i]->bind_index_buffer(ibuffer);
+		drawCmdBuffers[i]->draw_indexed(static_cast<uint32_t>(indices.size()));
+		drawCmdBuffers[i]->end_render_pass();
+		drawCmdBuffers[i]->pipeline_barrier(swap.buffers()[i]->image);
 	}
 }
-

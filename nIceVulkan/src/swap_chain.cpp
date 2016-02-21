@@ -7,7 +7,7 @@ using namespace std;
 namespace nif
 {
 	swap_chain::buffer::buffer(const device &device, const vk::Image imghandle, const vk::Format format)
-		: image(&image::wrap(device, imghandle)), view(*image, format, vk::ImageAspectFlagBits::eColor)
+		: image(device, imghandle), view(image, format, vk::ImageAspectFlagBits::eColor)
 	{
 	}
 
@@ -182,7 +182,7 @@ namespace nif
 		vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, imageHandles.data());
 
 		buffers_ = from(imageHandles)
-			.select<buffer>([&](auto x) { return buffer(device_, x, colorFormat); })
+			.select<unique_ptr<buffer>>([&](auto x) { return unique_ptr<buffer>(new buffer(device_, x, colorFormat)); })
 			.to_vector();
 	}
 
@@ -216,7 +216,7 @@ namespace nif
 		return queue_node_index_;
 	}
 
-	const vector<swap_chain::buffer>& swap_chain::buffers() const
+	const vector<unique_ptr<swap_chain::buffer>>& swap_chain::buffers() const
 	{
 		return buffers_;
 	}

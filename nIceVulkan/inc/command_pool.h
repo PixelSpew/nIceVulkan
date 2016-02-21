@@ -5,6 +5,8 @@ namespace nif
 {
 	class command_pool
 	{
+		command_pool(const command_pool&) = delete;
+
 	public:
 		command_pool(const swap_chain &swap);
 		~command_pool();

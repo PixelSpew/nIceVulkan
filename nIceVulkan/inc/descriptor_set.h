@@ -7,6 +7,8 @@ namespace nif
 {
 	class descriptor_set
 	{
+		descriptor_set(const descriptor_set&) = delete;
+
 	public:
 		descriptor_set(const std::initializer_list<std::reference_wrapper<const descriptor_set_layout>> setLayouts, const descriptor_pool &pool, const ibuffer &buffer);
 		~descriptor_set();

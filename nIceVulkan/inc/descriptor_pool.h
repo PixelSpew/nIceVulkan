@@ -5,6 +5,8 @@ namespace nif
 {
 	class descriptor_pool
 	{
+		descriptor_pool(const descriptor_pool&) = delete;
+
 	public:
 		descriptor_pool(const device &device);
 		~descriptor_pool();

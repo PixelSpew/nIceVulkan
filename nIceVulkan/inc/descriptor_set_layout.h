@@ -5,6 +5,8 @@ namespace nif
 {
 	class descriptor_set_layout
 	{
+		descriptor_set_layout(const descriptor_set_layout&) = delete;
+
 	public:
 		descriptor_set_layout(const device &device);
 		~descriptor_set_layout();

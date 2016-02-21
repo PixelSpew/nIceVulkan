@@ -1,19 +1,24 @@
 #pragma once
 #include <Windows.h>
 
-class window
+namespace nif
 {
-public:
-	window();
-	~window();
-	HWND hwnd();
-	HINSTANCE hinstance();
-	int width() const;
-	int height() const;
+	class window
+	{
+		window(const window&) = delete;
 
-private:
-	HWND hwnd_;
-	HINSTANCE hinstance_;
-	int width_ = 1440;
-	int height_ = 910;
-};
+	public:
+		window();
+		~window();
+		HWND hwnd();
+		HINSTANCE hinstance();
+		int width() const;
+		int height() const;
+
+	private:
+		HWND hwnd_;
+		HINSTANCE hinstance_;
+		int width_ = 1440;
+		int height_ = 910;
+	};
+}

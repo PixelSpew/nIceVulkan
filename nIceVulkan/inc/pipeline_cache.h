@@ -5,6 +5,8 @@ namespace nif
 {
 	class pipeline_cache
 	{
+		pipeline_cache(const pipeline_cache&) = delete;
+
 	public:
 		pipeline_cache(const device &device);
 		~pipeline_cache();

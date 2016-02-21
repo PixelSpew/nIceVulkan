@@ -8,6 +8,8 @@ namespace nif
 {
 	class ibuffer
 	{
+		ibuffer(const ibuffer&) = delete;
+
 	public:
 		vk::Buffer handle() const;
 		size_t size() const;
@@ -17,8 +19,6 @@ namespace nif
 		~ibuffer();
 
 	private:
-		ibuffer(const ibuffer&);
-
 		const device &device_;
 		vk::Buffer handle_;
 		std::unique_ptr<gpu_memory> gpumem_;

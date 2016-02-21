@@ -8,12 +8,14 @@ namespace nif
 {
 	class swap_chain
 	{
+		swap_chain(const swap_chain&) = delete;
+
 	public:
 		struct buffer
 		{
 			buffer(const device &device, const vk::Image imghandle, const vk::Format format);
 
-			std::unique_ptr<image> image;
+			image image;
 			image_view view;
 		};
 
@@ -28,7 +30,7 @@ namespace nif
 
 		uint32_t image_count() const;
 		uint32_t queue_node_index() const;
-		const std::vector<buffer>& buffers() const;
+		const std::vector<std::unique_ptr<buffer>>& buffers() const;
 		const device& parent_device() const;
 
 	private:
@@ -38,7 +40,7 @@ namespace nif
 		vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
 
 		uint32_t image_count_;
-		std::vector<buffer> buffers_;
+		std::vector<std::unique_ptr<buffer>> buffers_;
 		uint32_t queue_node_index_ = UINT32_MAX;
 		const device &device_;
 		const instance &instance_;

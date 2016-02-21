@@ -25,6 +25,11 @@ namespace nif
 		vkBindImageMemory(device.handle(), handle_, gpumem_->handle(), 0);
 	}
 
+	image::image(const device &device, const vk::Image handle)
+		: device_(device), handle_(handle)
+	{
+	}
+
 	image::~image()
 	{
 		if (gpumem_)	// if the handle is managed externally, gpumem_ will be empty
@@ -35,23 +40,9 @@ namespace nif
 	{
 		return handle_;
 	}
+
 	const device& image::parent_device() const
 	{
 		return device_;
-	}
-
-	image image::wrap(const device &device, const vk::Image handle)
-	{
-		return image(device, handle);
-	}
-
-	image::image(const device &device, const vk::Image handle)
-		: device_(device), handle_(handle)
-	{
-	}
-
-	image::image(const image &image)
-		: handle_(image.handle_), device_(image.device_)
-	{
 	}
 }

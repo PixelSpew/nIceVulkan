@@ -5,6 +5,8 @@ namespace nif
 {
 	class render_pass
 	{
+		render_pass(const render_pass&) = delete;
+
 	public:
 		render_pass(const device &device);
 		~render_pass();
