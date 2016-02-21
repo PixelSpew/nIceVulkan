@@ -1,5 +1,4 @@
 #pragma once
-#include "device.h"
 #include "gpu_memory.h"
 #include <vector>
 #include <memory>

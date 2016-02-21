@@ -1,19 +1,9 @@
 #include "stdafx.h"
-#include "buffer.h"
-#include "math/vec3.h"
 #include "math/mat4.h"
-#include "render_pass.h"
-#include "command_buffer.h"
-#include "framebuffer.h"
 #include "window.h"
 #include "util/linq.h"
-#include "pipeline_layout.h"
-#include "descriptor_set.h"
 #include "util/file.h"
-#include "shader_module.h"
-#include "pipeline.h"
-#include <vector>
-#include <string>
+#include "swap_chain.h"
 #include <iostream>
 
 using namespace std;
@@ -52,26 +42,30 @@ struct vertex
 
 int main()
 {
-	vector<vertex> vertices = { { vec3(1, 1, 0) }, { vec3(-1, 1, 0) }, { vec3(0, -1, 0) } };
-	std::vector<unsigned int> indices = { 0, 1, 2 };
-
 	instance vkinstance("nIce Framework");
 	device vkdevice(vkinstance);
+
+	vector<vertex> vertices = { { vec3(1, 1, 0) }, { vec3(-1, 1, 0) }, { vec3(0, -1, 0) } };
 	vertex_buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
+
+	std::vector<unsigned int> indices = { 0, 1, 2 };
 	buffer<uint32_t> ibuffer(vkdevice, vk::BufferUsageFlagBits::eIndexBuffer, indices);
 
 	window win;
 	render_pass renderpass(vkdevice);
 	swap_chain swap(vkinstance, vkdevice, win.hinstance(), win.hwnd());
 
-	command_pool cmdpool(swap);
+	command_pool cmdpool(swap.surface());
 	std::vector<unique_ptr<command_buffer>> drawCmdBuffers(swap.image_count());
 	for (unique_ptr<command_buffer> &drawCmdBuffer : drawCmdBuffers)
 		drawCmdBuffer = unique_ptr<command_buffer>(new command_buffer(cmdpool));
 
-	command_buffer postPresentCmdBuffer(cmdpool);
 	command_buffer setupCmdBuffer(cmdpool);
 	setupCmdBuffer.begin();
+
+	uint32_t width = win.width();
+	uint32_t height = win.height();
+	swap.setup(setupCmdBuffer, &width, &height);
 
 	//setup depth stencil
 	struct
@@ -80,13 +74,17 @@ int main()
 		unique_ptr<image_view> view;
 	} depthStencil;
 
-	depthStencil.image = unique_ptr<image>(new image(win.width(), win.height(), vkdevice));
+	depthStencil.image = unique_ptr<image>(new image(width, height, vkdevice));
 	setupCmdBuffer.setImageLayout(*depthStencil.image, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	depthStencil.view = unique_ptr<image_view>(new image_view(*depthStencil.image, vkdevice.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
 
 	std::vector<unique_ptr<framebuffer>> framebuffers;
 	for (uint32_t i = 0; i < swap.image_count(); i++)
-		framebuffers.push_back(unique_ptr<framebuffer>(new framebuffer(win.width(), win.height(), renderpass, { swap.buffers()[i]->view, *depthStencil.view })));
+		framebuffers.push_back(unique_ptr<framebuffer>(new framebuffer(width, height, renderpass, { swap.buffers()[i]->view, *depthStencil.view })));
+
+	setupCmdBuffer.end();
+	setupCmdBuffer.submit(vkdevice);
+	vkdevice.wait_queue_idle();
 
 	descriptor_set_layout descriptorSetLayout(vkdevice);
 	pipeline_layout pipelineLayout({ descriptorSetLayout });
@@ -99,7 +97,7 @@ int main()
 		mat4 viewMatrix;
 	} uboVS;
 
-	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(win.width()), static_cast<float>(win.height()), 0.1f, 256.0f);
+	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(width), static_cast<float>(height), 0.1f, 256.0f);
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
@@ -116,9 +114,9 @@ int main()
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
 		drawCmdBuffers[i]->begin();
-		drawCmdBuffers[i]->begin_render_pass(renderpass, *framebuffers[i], win.width(), win.height());
-		drawCmdBuffers[i]->set_viewport(static_cast<float>(win.width()), static_cast<float>(win.height()));
-		drawCmdBuffers[i]->set_scissor(0, 0, win.width(), win.height());
+		drawCmdBuffers[i]->begin_render_pass(renderpass, *framebuffers[i], width, height);
+		drawCmdBuffers[i]->set_viewport(static_cast<float>(width), static_cast<float>(height));
+		drawCmdBuffers[i]->set_scissor(0, 0, width, height);
 		drawCmdBuffers[i]->bind_descriptor_sets(pipelineLayout, descriptorSet);
 		drawCmdBuffers[i]->bind_pipeline(solidPipeline);
 		drawCmdBuffers[i]->bind_vertex_buffer(vbuffer);
@@ -128,4 +126,22 @@ int main()
 		drawCmdBuffers[i]->pipeline_barrier(swap.buffers()[i]->image);
 		drawCmdBuffers[i]->end();
 	}
+
+	/////////
+
+	uint32_t currentBuffer = 0;
+	command_buffer postPresentCmdBuffer(cmdpool);
+
+	//game loop begin
+	semaphore presentCompleteSemaphore(vkdevice);
+	swap.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
+	drawCmdBuffers[currentBuffer]->submit(vkdevice);
+	swap.queuePresent(currentBuffer);
+	
+	postPresentCmdBuffer.begin();
+	postPresentCmdBuffer.pipeline_barrier(swap.buffers()[currentBuffer]->image);
+	postPresentCmdBuffer.end();
+	postPresentCmdBuffer.submit(vkdevice);
+	vkdevice.wait_queue_idle();
+	//end game loop
 }

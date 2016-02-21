@@ -1,11 +1,9 @@
 #pragma once
 #include "command_pool.h"
-#include "image.h"
-#include "render_pass.h"
-#include "pipeline_layout.h"
 #include "descriptor_set.h"
 #include "framebuffer.h"
 #include "pipeline.h"
+#include "semaphore.h"
 
 namespace nif
 {
@@ -18,6 +16,8 @@ namespace nif
 		~command_buffer();
 		void begin();
 		void end();
+		void submit(const device &device);
+		void submit(const device &device, const semaphore &semaphore);
 		void begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height);
 		void end_render_pass();
 		void set_viewport(const float width, const float height);
@@ -31,6 +31,7 @@ namespace nif
 		void setImageLayout(const image &image, const vk::ImageAspectFlags &aspectMask, const vk::ImageLayout oldImageLayout, const vk::ImageLayout newImageLayout);
 
 		vk::CommandBuffer handle() const;
+		const device& parent_device() const;
 
 	private:
 		vk::CommandBuffer handle_;

@@ -32,6 +32,31 @@ namespace nif
 		vk::endCommandBuffer(handle_);
 	}
 
+	void command_buffer::submit(const device &device)
+	{
+		vk::CommandBuffer cmdbufferHandle = handle_;
+
+		vk::SubmitInfo submitInfo;
+		submitInfo.commandBufferCount(1);
+		submitInfo.pCommandBuffers(&cmdbufferHandle);
+
+		vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE);
+	}
+
+	void command_buffer::submit(const device &device, const semaphore &semaphore)
+	{
+		vk::Semaphore semaphoreHandle = semaphore.handle();
+		vk::CommandBuffer cmdbufferHandle = handle_;
+
+		vk::SubmitInfo submitInfo;
+		submitInfo.waitSemaphoreCount(1);
+		submitInfo.pWaitSemaphores(&semaphoreHandle);
+		submitInfo.commandBufferCount(1);
+		submitInfo.pCommandBuffers(&cmdbufferHandle);
+
+		vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE);
+	}
+
 	void command_buffer::begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height)
 	{
 		vk::ClearValue clearValues[2];
@@ -72,7 +97,7 @@ namespace nif
 
 	void command_buffer::bind_descriptor_sets(const pipeline_layout &pipelayout, const descriptor_set &descset)
 	{
-		vk::cmdBindDescriptorSets(handle_, vk::PipelineBindPoint::eGraphics, pipelayout.handle(), 0, descset.size(), descset.handles().data(), 0, nullptr);
+		vk::cmdBindDescriptorSets(handle_, vk::PipelineBindPoint::eGraphics, pipelayout.handle(), 0, static_cast<uint32_t>(descset.size()), descset.handles().data(), 0, nullptr);
 	}
 
 	void command_buffer::bind_pipeline(const pipeline &pipeline)
@@ -99,15 +124,15 @@ namespace nif
 
 	void command_buffer::pipeline_barrier(const image &image)
 	{
-		vk::ImageMemoryBarrier prePresentBarrier;
-		prePresentBarrier.srcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		prePresentBarrier.dstAccessMask(static_cast<vk::AccessFlagBits>(0));
-		prePresentBarrier.oldLayout(vk::ImageLayout::eColorAttachmentOptimal);
-		prePresentBarrier.newLayout(static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
-		prePresentBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		prePresentBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		prePresentBarrier.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-		prePresentBarrier.image(image.handle());
+		vk::ImageMemoryBarrier barrier;
+		barrier.srcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+		barrier.dstAccessMask(static_cast<vk::AccessFlagBits>(0));
+		barrier.oldLayout(vk::ImageLayout::eColorAttachmentOptimal);
+		barrier.newLayout(static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+		barrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+		barrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+		barrier.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		barrier.image(image.handle());
 
 		vk::cmdPipelineBarrier(
 			handle_,
@@ -116,7 +141,7 @@ namespace nif
 			static_cast<vk::DependencyFlagBits>(0),
 			0, nullptr,
 			0, nullptr,
-			1, &prePresentBarrier);
+			1, &barrier);
 	}
 
 	void command_buffer::setImageLayout(const image &image, const vk::ImageAspectFlags &aspectMask, const vk::ImageLayout oldImageLayout, const vk::ImageLayout newImageLayout)
@@ -172,5 +197,10 @@ namespace nif
 	vk::CommandBuffer command_buffer::handle() const
 	{
 		return handle_;
+	}
+
+	const device& command_buffer::parent_device() const
+	{
+		return pool_.parent_device();
 	}
 }

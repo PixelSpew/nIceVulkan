@@ -3,14 +3,14 @@
 
 namespace nif
 {
-	command_pool::command_pool(const swap_chain &swap)
-		: device_(swap.parent_device())
+	command_pool::command_pool(const win32_surface &surface)
+		: device_(surface.parent_device())
 	{
 		vk::CommandPoolCreateInfo cmdPoolInfo;
-		cmdPoolInfo.queueFamilyIndex(swap.queue_node_index());
+		cmdPoolInfo.queueFamilyIndex(surface.queue_node_index());
 		cmdPoolInfo.flags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
-		vk::createCommandPool(swap.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_);
+		vk::createCommandPool(surface.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_);
 	}
 
 	command_pool::~command_pool()

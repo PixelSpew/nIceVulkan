@@ -123,6 +123,9 @@
     <ClInclude Include="inc\pipeline_cache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\semaphore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -216,6 +219,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\shader_module.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\semaphore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

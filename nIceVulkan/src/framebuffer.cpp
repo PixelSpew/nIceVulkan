@@ -9,7 +9,7 @@ namespace nif
 	{
 		vk::FramebufferCreateInfo frameBufferCreateInfo;
 		frameBufferCreateInfo.renderPass(pass.handle());
-		frameBufferCreateInfo.attachmentCount(views.size());
+		frameBufferCreateInfo.attachmentCount(static_cast<uint32_t>(views.size()));
 		frameBufferCreateInfo.pAttachments(
 			from(views)
 				.select<vk::ImageView>([](const image_view &x) { return x.handle(); })

@@ -7,6 +7,7 @@ using namespace std;
 namespace nif
 {
 	device::device(const instance &instance)
+		: instance_(instance)
 	{
 		uint32_t gpuCount;
 		vk::enumeratePhysicalDevices(instance.handle(), &gpuCount, &physical_handle_);
@@ -51,6 +52,9 @@ namespace nif
 				break;
 			}
 		}
+
+		//get graphics queue
+		vkGetDeviceQueue(handle_, graphicsQueueIndex, 0, &queue_);
 	}
 
 	device::~device()
@@ -58,9 +62,19 @@ namespace nif
 		vk::destroyDevice(handle_, nullptr);
 	}
 
+	void device::wait_queue_idle()
+	{
+		vk::queueWaitIdle(queue_);
+	}
+
 	vk::Device device::handle() const
 	{
 		return handle_;
+	}
+
+	const instance& device::parent_instance() const
+	{
+		return instance_;
 	}
 
 	vk::PhysicalDevice device::physical_handle() const
@@ -72,8 +86,14 @@ namespace nif
 	{
 		return memory_properties_;
 	}
+
 	vk::Format device::depth_format() const
 	{
 		return depth_format_;
+	}
+
+	vk::Queue device::queue() const
+	{
+		return queue_;
 	}
 }

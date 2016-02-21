@@ -172,6 +172,7 @@
     <ClInclude Include="inc\pipeline_cache.h" />
     <ClInclude Include="inc\pipeline_layout.h" />
     <ClInclude Include="inc\render_pass.h" />
+    <ClInclude Include="inc\semaphore.h" />
     <ClInclude Include="inc\shader_module.h" />
     <ClInclude Include="inc\swap_chain.h" />
     <ClInclude Include="inc\util\file.h" />
@@ -187,6 +188,7 @@
   <ItemGroup>
     <ClCompile Include="src\pipeline.cpp" />
     <ClCompile Include="src\pipeline_cache.cpp" />
+    <ClCompile Include="src\semaphore.cpp" />
     <ClCompile Include="src\shader_module.cpp" />
     <ClCompile Include="src\util\file.cpp" />
     <ClCompile Include="src\descriptor_set.cpp" />
