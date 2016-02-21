@@ -26,4 +26,9 @@ namespace nif
 	{
 		vk::destroyFramebuffer(device_.handle(), handle_, nullptr);
 	}
+
+	vk::Framebuffer framebuffer::handle() const
+	{
+		return handle_;
+	}
 }

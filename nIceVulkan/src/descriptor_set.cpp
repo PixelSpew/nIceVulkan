@@ -41,4 +41,14 @@ namespace nif
 	{
 		vk::freeDescriptorSets(device_.handle(), pool_.handle(), DESCRIPTOR_SET_COUNT, handles_.data());
 	}
+
+	size_t descriptor_set::size() const
+	{
+		return handles_.size();
+	}
+
+	const std::vector<vk::DescriptorSet>& descriptor_set::handles() const
+	{
+		return handles_;
+	}
 }

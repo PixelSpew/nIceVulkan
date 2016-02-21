@@ -9,6 +9,9 @@
 #include "util/linq.h"
 #include "pipeline_layout.h"
 #include "descriptor_set.h"
+#include "util/file.h"
+#include "shader_module.h"
+#include "pipeline.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -46,13 +49,6 @@ struct vertex
 		return pipelineInfo;
 	}
 };
-
-int exit(string message)
-{
-	cout << message << endl;
-	cin.ignore();
-	return 1;
-}
 
 int main()
 {
@@ -106,5 +102,30 @@ int main()
 
 	buffer<ubo_type> uboBuffer(vkdevice, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
 	descriptor_set descriptorSet({ descriptorSetLayout }, descriptorPool, uboBuffer);
+
+	vector<shader_module> shaderModules =
+	{
+		shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eVertex),
+		shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eFragment)
+	};
+	pipeline_cache pipelineCache(vkdevice);
+	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, vertex::pipeline_info(), pipelineCache);
+
+	////////////
+
+	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
+	{
+		drawCmdBuffers[i].begin();
+		drawCmdBuffers[i].begin_render_pass(renderpass, *framebuffers[i], win.width(), win.height());
+		drawCmdBuffers[i].set_viewport(win.width(), win.height());
+		drawCmdBuffers[i].set_scissor(0, 0, win.width(), win.height());
+		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
+		drawCmdBuffers[i].bind_pipeline(solidPipeline);
+		drawCmdBuffers[i].bind_vertex_buffer(vbuffer);
+		drawCmdBuffers[i].bind_index_buffer(ibuffer);
+		drawCmdBuffers[i].draw_indexed(indices.size());
+		drawCmdBuffers[i].end_render_pass();
+		drawCmdBuffers[i].pipeline_barrier(*swap.buffers()[i].image);
+	}
 }
 

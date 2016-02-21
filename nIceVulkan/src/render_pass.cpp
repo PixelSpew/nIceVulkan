@@ -2,6 +2,8 @@
 #include "render_pass.h"
 #include <vector>
 
+using namespace std;
+
 namespace nif
 {
 	render_pass::render_pass(const device &device)

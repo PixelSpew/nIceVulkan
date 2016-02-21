@@ -10,6 +10,8 @@ namespace nif
 	public:
 		descriptor_set(const std::initializer_list<std::reference_wrapper<const descriptor_set_layout>> setLayouts, const descriptor_pool &pool, const ibuffer &buffer);
 		~descriptor_set();
+		size_t size() const;
+		const std::vector<vk::DescriptorSet>& handles() const;
 
 	private:
 		std::vector<vk::DescriptorSet> handles_;

@@ -168,9 +168,13 @@
     <ClInclude Include="inc\math\vec2.h" />
     <ClInclude Include="inc\math\vec3.h" />
     <ClInclude Include="inc\math\vec4.h" />
+    <ClInclude Include="inc\pipeline.h" />
+    <ClInclude Include="inc\pipeline_cache.h" />
     <ClInclude Include="inc\pipeline_layout.h" />
     <ClInclude Include="inc\render_pass.h" />
+    <ClInclude Include="inc\shader_module.h" />
     <ClInclude Include="inc\swap_chain.h" />
+    <ClInclude Include="inc\util\file.h" />
     <ClInclude Include="inc\util\linq.h" />
     <ClInclude Include="inc\vulkan\vk_cpp.h" />
     <ClInclude Include="inc\vulkan\vk_platform.h" />
@@ -181,6 +185,10 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\pipeline.cpp" />
+    <ClCompile Include="src\pipeline_cache.cpp" />
+    <ClCompile Include="src\shader_module.cpp" />
+    <ClCompile Include="src\util\file.cpp" />
     <ClCompile Include="src\descriptor_set.cpp" />
     <ClCompile Include="src\descriptor_pool.cpp" />
     <ClCompile Include="src\descriptor_set_layout.cpp" />

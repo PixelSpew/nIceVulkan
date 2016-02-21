@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "command_buffer.h"
+#include "util/linq.h"
+
+using namespace std;
 
 namespace nif
 {
@@ -22,6 +25,98 @@ namespace nif
 	void command_buffer::begin()
 	{
 		vk::beginCommandBuffer(handle_, &begin_info_);
+	}
+
+	void command_buffer::end()
+	{
+		vk::endCommandBuffer(handle_);
+	}
+
+	void command_buffer::begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height)
+	{
+		vk::ClearValue clearValues[2];
+		array<float, 4> clearColor = { .2f, .2f, .2f, 1 };
+		clearValues[0].color(vk::ClearColorValue(clearColor));
+		clearValues[1].depthStencil(vk::ClearDepthStencilValue(1.0f, 0));
+
+		vk::RenderPassBeginInfo beginInfo;
+		beginInfo.renderPass(pass.handle());
+		beginInfo.renderArea(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
+		beginInfo.clearValueCount(2);
+		beginInfo.pClearValues(clearValues);
+		beginInfo.framebuffer(framebuffer.handle());
+
+		vk::cmdBeginRenderPass(handle_, &beginInfo, vk::SubpassContents::eInline);
+	}
+
+	void command_buffer::end_render_pass()
+	{
+		vkCmdEndRenderPass(handle_);
+	}
+
+	void command_buffer::set_viewport(const float width, const float height)
+	{
+		vk::Viewport viewport;
+		viewport.height(height);
+		viewport.width(width);
+		viewport.minDepth(0.0f);
+		viewport.maxDepth(1.0f);
+		vk::cmdSetViewport(handle_, 0, 1, &viewport);
+	}
+
+	void command_buffer::set_scissor(int32_t x, int32_t y, uint32_t width, uint32_t height)
+	{
+		vk::Rect2D scissor(vk::Offset2D(x, y), vk::Extent2D(width, height));
+		vk::cmdSetScissor(handle_, 0, 1, &scissor);
+	}
+
+	void command_buffer::bind_descriptor_sets(const pipeline_layout &pipelayout, const descriptor_set &descset)
+	{
+		vk::cmdBindDescriptorSets(handle_, vk::PipelineBindPoint::eGraphics, pipelayout.handle(), 0, descset.size(), descset.handles().data(), 0, nullptr);
+	}
+
+	void command_buffer::bind_pipeline(const pipeline &pipeline)
+	{
+		vk::cmdBindPipeline(handle_, vk::PipelineBindPoint::eGraphics, pipeline.handle());
+	}
+
+	void command_buffer::bind_vertex_buffer(const ibuffer &buffer)
+	{
+		vk::Buffer bufhandle = buffer.handle();
+		vector<vk::DeviceSize> offsets = { 0 };
+		vk::cmdBindVertexBuffers(handle_, 0, 1, &bufhandle, offsets.data());
+	}
+
+	void command_buffer::bind_index_buffer(const buffer<uint32_t> &buffer)
+	{
+		vk::cmdBindIndexBuffer(handle_, buffer.handle(), 0, vk::IndexType::eUint32);
+	}
+
+	void command_buffer::draw_indexed(const uint32_t indexCount)
+	{
+		vk::cmdDrawIndexed(handle_, indexCount, 1, 0, 0, 1);
+	}
+
+	void command_buffer::pipeline_barrier(const image &image)
+	{
+		vk::ImageMemoryBarrier prePresentBarrier;
+		prePresentBarrier.srcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+		prePresentBarrier.dstAccessMask(static_cast<vk::AccessFlagBits>(0));
+		prePresentBarrier.oldLayout(vk::ImageLayout::eColorAttachmentOptimal);
+		prePresentBarrier.newLayout(static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+		prePresentBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+		prePresentBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+		prePresentBarrier.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		prePresentBarrier.image(image.handle());
+
+		vk::cmdPipelineBarrier(
+			handle_,
+			vk::PipelineStageFlagBits::eAllCommands,
+			vk::PipelineStageFlagBits::eTopOfPipe,
+			static_cast<vk::DependencyFlagBits>(0),
+			0, nullptr,
+			0, nullptr,
+			1, &prePresentBarrier);
 	}
 
 	void command_buffer::setImageLayout(const image &image, const vk::ImageAspectFlags &aspectMask, const vk::ImageLayout oldImageLayout, const vk::ImageLayout newImageLayout)

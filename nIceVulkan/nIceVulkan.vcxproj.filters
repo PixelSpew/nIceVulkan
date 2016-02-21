@@ -111,6 +111,18 @@
     <ClInclude Include="inc\descriptor_set.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\util\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\shader_module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\pipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\pipeline_cache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -192,6 +204,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\descriptor_set.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipeline_cache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\shader_module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
