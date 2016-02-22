@@ -2,7 +2,7 @@
 #include "math/mat4.h"
 #include "window.h"
 #include "util/file.h"
-#include "swap_chain.h"
+#include "vkwrap/swap_chain.h"
 #include <iostream>
 
 using namespace std;
