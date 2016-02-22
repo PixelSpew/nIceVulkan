@@ -22,5 +22,25 @@ namespace nif
 			in.close();
 			return contents;
 		}
+
+		void write_all_text(const std::string &filename, const std::string &text)
+		{
+			ofstream out(filename, ios::out | ios::binary | ios::trunc);
+			if (!out)
+				throw errno;
+
+			out.write(text.c_str(), text.size());
+			out.close();
+		}
+
+		void append_all_text(const std::string &filename, const std::string &text)
+		{
+			ofstream out(filename, ios::out | ios::binary | ios::app);
+			if (!out)
+				throw errno;
+
+			out.write(text.c_str(), text.size());
+			out.close();
+		}
 	}
 }

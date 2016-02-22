@@ -55,9 +55,6 @@ int main()
 	swap_chain swap(vkdevice, win.hinstance(), win.hwnd());
 
 	command_pool cmdpool(swap.surface());
-	std::vector<command_buffer> drawCmdBuffers;
-	for (uint32_t i = 0; i < swap.image_count(); i++)
-		drawCmdBuffers.push_back(command_buffer(cmdpool));
 
 	command_buffer setupCmdBuffer(cmdpool);
 	setupCmdBuffer.begin();
@@ -65,6 +62,10 @@ int main()
 	uint32_t width = win.width();
 	uint32_t height = win.height();
 	swap.setup(setupCmdBuffer, &width, &height);
+
+	std::vector<command_buffer> drawCmdBuffers;
+	for (uint32_t i = 0; i < swap.image_count(); i++)
+		drawCmdBuffers.push_back(command_buffer(cmdpool));
 
 	//setup depth stencil
 	struct
@@ -105,8 +106,8 @@ int main()
 	descriptor_set descriptorSet(descriptorSetLayouts, descriptorPool, uboBuffer);
 
 	vector<shader_module> shaderModules;
-	shaderModules.push_back(shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eVertex));
-	shaderModules.push_back(shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eFragment));
+	shaderModules.push_back(shader_module(vkdevice, file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
+	shaderModules.push_back(shader_module(vkdevice, file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
 
 	pipeline_cache pipelineCache(vkdevice);
 	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, vertex::pipeline_info(), pipelineCache);

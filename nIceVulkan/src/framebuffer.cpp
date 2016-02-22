@@ -26,11 +26,13 @@ namespace nif
 	framebuffer::framebuffer(framebuffer &&old)
 		: handle_(old.handle_), device_(move(old.device_))
 	{
+		old.handle_ = nullptr;
 	}
 
 	framebuffer::~framebuffer()
 	{
-		vk::destroyFramebuffer(device_.handle(), handle_, nullptr);
+		if (handle_)
+			vk::destroyFramebuffer(device_.handle(), handle_, nullptr);
 	}
 
 	vk::Framebuffer framebuffer::handle() const

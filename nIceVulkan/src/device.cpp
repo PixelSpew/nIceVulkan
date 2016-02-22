@@ -28,19 +28,26 @@ namespace nif
 
 		vector<float> queuePriorities = { 0.0f };
 		vk::DeviceQueueCreateInfo queueCreateInfo;
-		queueCreateInfo.queueFamilyIndex(graphicsQueueIndex);
-		queueCreateInfo.queueCount(static_cast<uint32_t>(queuePriorities.size()));
-		queueCreateInfo.pQueuePriorities(queuePriorities.data());
+		queueCreateInfo
+			.queueFamilyIndex(graphicsQueueIndex)
+			.queueCount(static_cast<uint32_t>(queuePriorities.size()))
+			.pQueuePriorities(queuePriorities.data());
 
 		vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		vk::DeviceCreateInfo deviceCreateInfo;
-		deviceCreateInfo.queueCreateInfoCount(1);
-		deviceCreateInfo.pQueueCreateInfos(&queueCreateInfo);
-		deviceCreateInfo.enabledExtensionCount(static_cast<uint32_t>(extensions.size()));
-		deviceCreateInfo.ppEnabledExtensionNames(extensions.data());
+		deviceCreateInfo
+			.queueCreateInfoCount(1)
+			.pQueueCreateInfos(&queueCreateInfo)
+			.enabledExtensionCount(static_cast<uint32_t>(extensions.size()))
+			.ppEnabledExtensionNames(extensions.data())
+			.enabledLayerCount(static_cast<uint32_t>(instance.layers().size()))
+			.ppEnabledLayerNames(instance.layers().data());
 
 		if (vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
+
+		//get memory properties
+		vk::getPhysicalDeviceMemoryProperties(physical_handle_, &memory_properties_);
 
 		//get depth format
 		std::vector<vk::Format> depthFormats = { vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm };

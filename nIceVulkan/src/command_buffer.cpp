@@ -20,11 +20,13 @@ namespace nif
 	command_buffer::command_buffer(command_buffer &&old)
 		: handle_(old.handle_), begin_info_(old.begin_info_), pool_(move(old.pool_))
 	{
+		old.handle_ = nullptr;
 	}
 
 	command_buffer::~command_buffer()
 	{
-		vk::freeCommandBuffers(pool_.parent_device().handle(), pool_.handle(), 1, &handle_);
+		if (handle_)
+			vk::freeCommandBuffers(pool_.parent_device().handle(), pool_.handle(), 1, &handle_);
 	}
 
 	void command_buffer::begin()

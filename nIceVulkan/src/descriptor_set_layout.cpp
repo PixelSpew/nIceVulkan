@@ -24,11 +24,13 @@ namespace nif
 	descriptor_set_layout::descriptor_set_layout(descriptor_set_layout &&old)
 		: handle_(old.handle_), device_(move(old.device_))
 	{
+		old.handle_ = nullptr;
 	}
 
 	descriptor_set_layout::~descriptor_set_layout()
 	{
-		vk::destroyDescriptorSetLayout(device_.handle(), handle_, nullptr);
+		if (handle_)
+			vk::destroyDescriptorSetLayout(device_.handle(), handle_, nullptr);
 	}
 
 	vk::DescriptorSetLayout descriptor_set_layout::handle() const

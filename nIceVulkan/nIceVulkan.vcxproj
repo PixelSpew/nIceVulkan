@@ -145,9 +145,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="inc\buffer.h" />
     <ClInclude Include="inc\command_buffer.h" />
     <ClInclude Include="inc\command_pool.h" />
@@ -175,7 +172,9 @@
     <ClInclude Include="inc\semaphore.h" />
     <ClInclude Include="inc\shader_module.h" />
     <ClInclude Include="inc\swap_chain.h" />
+    <ClInclude Include="inc\util\directory.h" />
     <ClInclude Include="inc\util\file.h" />
+    <ClInclude Include="inc\util\strext.h" />
     <ClInclude Include="inc\vulkan\vk_cpp.h" />
     <ClInclude Include="inc\vulkan\vk_platform.h" />
     <ClInclude Include="inc\vulkan\vulkan.h" />
@@ -185,6 +184,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\util\directory.cpp" />
+    <ClCompile Include="src\util\strext.cpp" />
     <ClCompile Include="src\pipeline.cpp" />
     <ClCompile Include="src\pipeline_cache.cpp" />
     <ClCompile Include="src\semaphore.cpp" />

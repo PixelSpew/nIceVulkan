@@ -9,8 +9,6 @@ namespace nif
 		: device_(device)
 	{
 		vk::MemoryAllocateInfo mem_alloc;
-		mem_alloc.allocationSize(0);
-		mem_alloc.memoryTypeIndex(0);
 		mem_alloc.allocationSize(memreqs.size());
 
 		uint32_t typeBits = memreqs.memoryTypeBits();

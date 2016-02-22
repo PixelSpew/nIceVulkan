@@ -12,7 +12,7 @@ namespace nif
 		void wait_queue_idle();
 
 		vk::Device handle() const;
-		const instance &parent_instance() const;
+		const instance& parent_instance() const;
 		vk::PhysicalDevice physical_handle() const;
 		const vk::PhysicalDeviceMemoryProperties& memory_properties() const;
 		vk::Format depth_format() const;
