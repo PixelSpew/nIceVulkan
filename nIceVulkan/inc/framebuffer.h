@@ -1,7 +1,6 @@
 #pragma once
 #include "image_view.h"
 #include "render_pass.h"
-#include <vector>
 
 namespace nif
 {

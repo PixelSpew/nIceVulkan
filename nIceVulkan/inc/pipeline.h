@@ -3,7 +3,6 @@
 #include "shader_module.h"
 #include "render_pass.h"
 #include "pipeline_cache.h"
-#include <vector>
 #include <memory>
 
 namespace nif

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "shader_module.h"
-#include <vector>
 
 using namespace std;
 

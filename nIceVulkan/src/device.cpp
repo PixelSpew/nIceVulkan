@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "device.h"
-#include <vector>
 
 using namespace std;
 

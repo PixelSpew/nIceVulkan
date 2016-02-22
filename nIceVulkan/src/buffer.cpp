@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "buffer.h"
-#include "gpu_memory.h"
 
 using namespace std;
 

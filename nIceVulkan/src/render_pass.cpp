@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "render_pass.h"
-#include <vector>
 
 using namespace std;
 

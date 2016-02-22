@@ -9,6 +9,7 @@ namespace nif
 		window();
 		window(const window&) = delete;
 		~window();
+
 		HWND hwnd();
 		HINSTANCE hinstance();
 		int width() const;
@@ -18,6 +19,6 @@ namespace nif
 		HWND hwnd_;
 		HINSTANCE hinstance_;
 		int width_ = 1440;
-		int height_ = 910;
+		int height_ = 810;
 	};
 }

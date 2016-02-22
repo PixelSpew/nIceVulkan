@@ -1,6 +1,5 @@
 #pragma once
 #include "gpu_memory.h"
-#include <vector>
 #include <memory>
 
 namespace nif

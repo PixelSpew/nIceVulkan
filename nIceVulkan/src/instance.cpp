@@ -2,7 +2,6 @@
 #include "instance.h"
 #include "util/file.h"
 #include "util/directory.h"
-#include <vector>
 
 using namespace std;
 

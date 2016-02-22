@@ -1,6 +1,5 @@
 #pragma once
 #include "descriptor_set_layout.h"
-#include <vector>
 
 namespace nif
 {

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "win32_surface.h"
-#include <vector>
 
 using namespace std;
 

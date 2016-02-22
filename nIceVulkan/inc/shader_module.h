@@ -1,6 +1,5 @@
 #pragma once
 #include "device.h"
-#include <string>
 
 namespace nif
 {
