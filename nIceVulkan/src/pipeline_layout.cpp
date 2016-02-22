@@ -1,24 +1,23 @@
 #include "stdafx.h"
 #include "pipeline_layout.h"
-#include "util/linq.h"
 
 using namespace std;
 
 namespace nif
 {
-	pipeline_layout::pipeline_layout(const std::initializer_list<std::reference_wrapper<const descriptor_set_layout>> descSetLayouts)
-		: device_((*descSetLayouts.begin()).get().parent_device())
+	pipeline_layout::pipeline_layout(const vector<descriptor_set_layout> &descSetLayouts)
+		: device_(descSetLayouts[0].parent_device())
 	{
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo;
 		pPipelineLayoutCreateInfo.setLayoutCount(static_cast<uint32_t>(descSetLayouts.size()));
-		pPipelineLayoutCreateInfo.pSetLayouts(
-			from(descSetLayouts)
-			.select<vk::DescriptorSetLayout>([](const reference_wrapper<const descriptor_set_layout> &x) { return x.get().handle(); })
-			.to_vector()
-			.data()
-		);
 
-		if (vk::createPipelineLayout((*descSetLayouts.begin()).get().parent_device().handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
+		vector<vk::DescriptorSetLayout> handles;
+		for (auto &layout : descSetLayouts)
+			handles.push_back(layout.handle());
+
+		pPipelineLayoutCreateInfo.pSetLayouts(handles.data());
+
+		if (vk::createPipelineLayout(device_.handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 	}
 

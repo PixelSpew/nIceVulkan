@@ -5,10 +5,9 @@ namespace nif
 {
 	class win32_surface
 	{
-		win32_surface(const win32_surface&) = delete;
-
 	public:
 		win32_surface(const device &device, const HINSTANCE platformHandle, const HWND platformWindow);
+		win32_surface(const win32_surface&) = delete;
 		~win32_surface();
 		vk::SurfaceKHR handle() const;
 		const device& parent_device() const;

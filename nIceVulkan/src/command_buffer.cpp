@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "command_buffer.h"
-#include "util/linq.h"
 
 using namespace std;
 
@@ -16,6 +15,11 @@ namespace nif
 
 		if (vk::allocateCommandBuffers(pool.parent_device().handle(), &allocateInfo, &handle_) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
+	}
+
+	command_buffer::command_buffer(command_buffer &&old)
+		: handle_(old.handle_), begin_info_(old.begin_info_), pool_(move(old.pool_))
+	{
 	}
 
 	command_buffer::~command_buffer()

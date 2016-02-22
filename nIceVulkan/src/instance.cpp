@@ -24,6 +24,11 @@ namespace nif
 			throw runtime_error("fail");
 	}
 
+	instance::instance(instance &&old)
+		: handle_(old.handle_)
+	{
+	}
+
 	instance::~instance()
 	{
 		vk::destroyInstance(handle_, nullptr);

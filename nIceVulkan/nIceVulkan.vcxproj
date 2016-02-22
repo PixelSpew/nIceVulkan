@@ -176,7 +176,6 @@
     <ClInclude Include="inc\shader_module.h" />
     <ClInclude Include="inc\swap_chain.h" />
     <ClInclude Include="inc\util\file.h" />
-    <ClInclude Include="inc\util\linq.h" />
     <ClInclude Include="inc\vulkan\vk_cpp.h" />
     <ClInclude Include="inc\vulkan\vk_platform.h" />
     <ClInclude Include="inc\vulkan\vulkan.h" />

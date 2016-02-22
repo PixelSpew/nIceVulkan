@@ -7,9 +7,8 @@ namespace nif
 {
 	class ibuffer
 	{
-		ibuffer(const ibuffer&) = delete;
-
 	public:
+		ibuffer(const ibuffer&) = delete;
 		vk::Buffer handle() const;
 		size_t size() const;
 
@@ -41,25 +40,5 @@ namespace nif
 			: buffer<T>(device, flags, data)
 		{
 		}
-
-		const std::vector<vk::VertexInputBindingDescription>& bind_descs() const
-		{
-			return T::binding_descriptions();
-		}
-
-		const std::vector<vk::VertexInputAttributeDescription>& attrib_descs() const
-		{
-			return T::attribute_descriptions();
-		}
-
-		const vk::PipelineVertexInputStateCreateInfo& pipeline_info() const
-		{
-			return T::pipeline_info();
-		}
-
-	private:
-		vk::PipelineVertexInputStateCreateInfo pipeline_info_;
-		std::vector<vk::VertexInputBindingDescription> bind_descs_;
-		std::vector<vk::VertexInputAttributeDescription> attrib_descs_;
 	};
 }

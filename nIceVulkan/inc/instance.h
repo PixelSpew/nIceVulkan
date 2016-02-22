@@ -6,10 +6,10 @@ namespace nif
 {
 	class instance
 	{
-		instance(const instance&) = delete;
-
 	public:
 		instance(const std::string &name);
+		instance(const instance&) = delete;
+		instance(instance &&old);
 		~instance();
 		vk::Instance handle() const;
 

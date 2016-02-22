@@ -7,6 +7,7 @@ namespace nif
 	{
 	public:
 		semaphore(const device &device);
+		semaphore(const semaphore&) = delete;
 		~semaphore();
 		vk::Semaphore handle() const;
 

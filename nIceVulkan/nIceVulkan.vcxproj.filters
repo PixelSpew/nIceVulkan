@@ -93,9 +93,6 @@
     <ClInclude Include="inc\framebuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\util\linq.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\win32_surface.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "math/mat4.h"
 #include "window.h"
-#include "util/linq.h"
 #include "util/file.h"
 #include "swap_chain.h"
 #include <iostream>
@@ -56,9 +55,9 @@ int main()
 	swap_chain swap(vkdevice, win.hinstance(), win.hwnd());
 
 	command_pool cmdpool(swap.surface());
-	std::vector<unique_ptr<command_buffer>> drawCmdBuffers(swap.image_count());
-	for (unique_ptr<command_buffer> &drawCmdBuffer : drawCmdBuffers)
-		drawCmdBuffer = unique_ptr<command_buffer>(new command_buffer(cmdpool));
+	std::vector<command_buffer> drawCmdBuffers;
+	for (uint32_t i = 0; i < swap.image_count(); i++)
+		drawCmdBuffers.push_back(command_buffer(cmdpool));
 
 	command_buffer setupCmdBuffer(cmdpool);
 	setupCmdBuffer.begin();
@@ -78,16 +77,17 @@ int main()
 	setupCmdBuffer.setImageLayout(*depthStencil.image, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	depthStencil.view = unique_ptr<image_view>(new image_view(*depthStencil.image, vkdevice.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
 
-	std::vector<unique_ptr<framebuffer>> framebuffers;
+	std::vector<framebuffer> framebuffers;
 	for (uint32_t i = 0; i < swap.image_count(); i++)
-		framebuffers.push_back(unique_ptr<framebuffer>(new framebuffer(width, height, renderpass, { swap.buffers()[i]->view, *depthStencil.view })));
+		framebuffers.push_back(framebuffer(width, height, renderpass, { swap.buffers()[i]->view, *depthStencil.view }));
 
 	setupCmdBuffer.end();
 	setupCmdBuffer.submit(vkdevice);
 	vkdevice.wait_queue_idle();
 
-	descriptor_set_layout descriptorSetLayout(vkdevice);
-	pipeline_layout pipelineLayout({ descriptorSetLayout });
+	vector<descriptor_set_layout> descriptorSetLayouts;
+	descriptorSetLayouts.push_back(descriptor_set_layout(vkdevice));
+	pipeline_layout pipelineLayout(descriptorSetLayouts);
 	descriptor_pool descriptorPool(vkdevice);
 
 	//prepare uniform buffers
@@ -102,29 +102,29 @@ int main()
 	uboVS.modelMatrix = mat4::identity();
 
 	buffer<ubo_type> uboBuffer(vkdevice, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
-	descriptor_set descriptorSet({ descriptorSetLayout }, descriptorPool, uboBuffer);
+	descriptor_set descriptorSet(descriptorSetLayouts, descriptorPool, uboBuffer);
 
-	vector<unique_ptr<shader_module>> shaderModules(2);
-	shaderModules[0] = unique_ptr<shader_module>(new shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eVertex));
-	shaderModules[1] = unique_ptr<shader_module>(new shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eFragment));
+	vector<shader_module> shaderModules;
+	shaderModules.push_back(shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eVertex));
+	shaderModules.push_back(shader_module(vkdevice, file::read_all_text(""), vk::ShaderStageFlagBits::eFragment));
 
 	pipeline_cache pipelineCache(vkdevice);
 	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, vertex::pipeline_info(), pipelineCache);
 
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
-		drawCmdBuffers[i]->begin();
-		drawCmdBuffers[i]->begin_render_pass(renderpass, *framebuffers[i], width, height);
-		drawCmdBuffers[i]->set_viewport(static_cast<float>(width), static_cast<float>(height));
-		drawCmdBuffers[i]->set_scissor(0, 0, width, height);
-		drawCmdBuffers[i]->bind_descriptor_sets(pipelineLayout, descriptorSet);
-		drawCmdBuffers[i]->bind_pipeline(solidPipeline);
-		drawCmdBuffers[i]->bind_vertex_buffer(vbuffer);
-		drawCmdBuffers[i]->bind_index_buffer(ibuffer);
-		drawCmdBuffers[i]->draw_indexed(static_cast<uint32_t>(indices.size()));
-		drawCmdBuffers[i]->end_render_pass();
-		drawCmdBuffers[i]->pipeline_barrier(swap.buffers()[i]->image);
-		drawCmdBuffers[i]->end();
+		drawCmdBuffers[i].begin();
+		drawCmdBuffers[i].begin_render_pass(renderpass, framebuffers[i], width, height);
+		drawCmdBuffers[i].set_viewport(static_cast<float>(width), static_cast<float>(height));
+		drawCmdBuffers[i].set_scissor(0, 0, width, height);
+		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
+		drawCmdBuffers[i].bind_pipeline(solidPipeline);
+		drawCmdBuffers[i].bind_vertex_buffer(vbuffer);
+		drawCmdBuffers[i].bind_index_buffer(ibuffer);
+		drawCmdBuffers[i].draw_indexed(static_cast<uint32_t>(indices.size()));
+		drawCmdBuffers[i].end_render_pass();
+		drawCmdBuffers[i].pipeline_barrier(swap.buffers()[i]->image);
+		drawCmdBuffers[i].end();
 	}
 
 	/////////
@@ -135,7 +135,7 @@ int main()
 	//game loop begin
 	semaphore presentCompleteSemaphore(vkdevice);
 	swap.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
-	drawCmdBuffers[currentBuffer]->submit(vkdevice);
+	drawCmdBuffers[currentBuffer].submit(vkdevice);
 	swap.queuePresent(currentBuffer);
 	
 	postPresentCmdBuffer.begin();

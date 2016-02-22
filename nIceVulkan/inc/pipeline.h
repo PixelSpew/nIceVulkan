@@ -10,15 +10,14 @@ namespace nif
 {
 	class pipeline
 	{
-		pipeline(const pipeline&) = delete;
-
 	public:
 		pipeline(
 			const pipeline_layout &layout,
 			const render_pass &pass,
-			const std::vector<std::unique_ptr<shader_module>> &shaderModules,
+			const std::vector<shader_module> &shaderModules,
 			const vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo,
 			const pipeline_cache &cache);
+		pipeline(const pipeline&) = delete;
 		~pipeline();
 		vk::Pipeline handle() const;
 

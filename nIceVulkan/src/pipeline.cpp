@@ -8,7 +8,7 @@ namespace nif
 	pipeline::pipeline(
 		const pipeline_layout &layout,
 		const render_pass &pass,
-		const std::vector<unique_ptr<shader_module>> &shaderModules,
+		const std::vector<shader_module> &shaderModules,
 		const vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo,
 		const pipeline_cache &cache)
 		: device_(pass.parent_device())
@@ -16,8 +16,8 @@ namespace nif
 		vector<vk::PipelineShaderStageCreateInfo> shaderStages(shaderModules.size());
 		for (size_t i = 0; i < shaderStages.size(); i++)
 		{
-			shaderStages[i].stage(shaderModules[i]->stage());
-			shaderStages[i].module(shaderModules[i]->handle());
+			shaderStages[i].stage(shaderModules[i].stage());
+			shaderStages[i].module(shaderModules[i].handle());
 			shaderStages[i].pName("main");
 		}
 

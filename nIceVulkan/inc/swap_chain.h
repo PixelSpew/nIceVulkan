@@ -5,8 +5,6 @@ namespace nif
 {
 	class swap_chain
 	{
-		swap_chain(const swap_chain&) = delete;
-
 	public:
 		struct buffer
 		{
@@ -18,6 +16,7 @@ namespace nif
 
 	public:
 		swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow);
+		swap_chain(const swap_chain&) = delete;
 		~swap_chain();
 		void setup(command_buffer &cmdBuffer, uint32_t *width, uint32_t *height);
 		void acquireNextImage(const semaphore &semaphore, uint32_t *currentBuffer);

@@ -9,10 +9,10 @@ namespace nif
 {
 	class command_buffer
 	{
-		command_buffer(const command_buffer&) = delete;
-
 	public:
 		command_buffer(const command_pool &pool);
+		command_buffer(const command_buffer&) = delete;
+		command_buffer(command_buffer &&old);
 		~command_buffer();
 		void begin();
 		void end();

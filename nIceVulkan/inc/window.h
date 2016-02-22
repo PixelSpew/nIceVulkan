@@ -5,10 +5,9 @@ namespace nif
 {
 	class window
 	{
-		window(const window&) = delete;
-
 	public:
 		window();
+		window(const window&) = delete;
 		~window();
 		HWND hwnd();
 		HINSTANCE hinstance();

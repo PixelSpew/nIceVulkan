@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "swap_chain.h"
-#include "util/linq.h"
 
 using namespace std;
 

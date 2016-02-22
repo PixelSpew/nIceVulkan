@@ -21,6 +21,11 @@ namespace nif
 			throw runtime_error("fail");
 	}
 
+	descriptor_set_layout::descriptor_set_layout(descriptor_set_layout &&old)
+		: handle_(old.handle_), device_(move(old.device_))
+	{
+	}
+
 	descriptor_set_layout::~descriptor_set_layout()
 	{
 		vk::destroyDescriptorSetLayout(device_.handle(), handle_, nullptr);
