@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="inc\keyboard.h" />
     <ClInclude Include="inc\util\dispatcher.h" />
     <ClInclude Include="inc\vkwrap\buffer.h" />
     <ClInclude Include="inc\vkwrap\command_buffer.h" />
@@ -185,6 +186,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="inc\keyboard.cpp" />
     <ClCompile Include="src\util\directory.cpp" />
     <ClCompile Include="src\util\strext.cpp" />
     <ClCompile Include="src\vkwrap\pipeline.cpp" />

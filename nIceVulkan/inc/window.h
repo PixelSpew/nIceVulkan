@@ -1,6 +1,7 @@
 #pragma once
-#include <Windows.h>
 #include "util/dispatcher.h"
+#include "keyboard.h"
+#include <Windows.h>
 
 namespace nif
 {
@@ -9,22 +10,26 @@ namespace nif
 	public:
 		using timeevent = dispatcher<window, void(double delta)>;
 
-	public:
 		window();
 		window(const window&) = delete;
 		~window();
 		void run(double updateRate);
+		void close();
 
 		timeevent& update();
 		timeevent& draw();
+		keyboard::keyevent& keyhit(const keys key);
 		HWND hwnd();
 		HINSTANCE hinstance();
 		int width() const;
 		int height() const;
 
+		static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
 	private:
 		HWND hwnd_;
 		HINSTANCE hinstance_;
+		keyboard keyboard_;
 		int width_ = 1440;
 		int height_ = 810;
 		timeevent update_;

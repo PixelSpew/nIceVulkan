@@ -1,42 +1,13 @@
 #include "stdafx.h"
 #include "window.h"
 #include <chrono>
+#include <map>
 
 using namespace std;
 
 namespace nif
 {
-	LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-	{
-		switch (message)
-		{
-		case WM_COMMAND:
-		{
-			int wmId = LOWORD(wParam);
-			// Parse the menu selections:
-			switch (wmId)
-			{
-			default:
-				return DefWindowProc(hWnd, message, wParam, lParam);
-			}
-		}
-		break;
-		case WM_PAINT:
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);
-			// TODO: Add any drawing code that uses hdc here...
-			EndPaint(hWnd, &ps);
-		}
-		break;
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			break;
-		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
-		}
-		return 0;
-	}
+	map<HWND, reference_wrapper<window>> windows;
 
 	window::window()
 	{
@@ -68,10 +39,11 @@ namespace nif
 		hwnd_ = CreateWindowEx(
 			0, class_name, L"nIce Framework", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 			CW_USEDEFAULT, CW_USEDEFAULT, width_, height_,
-			NULL, NULL, hinstance_, NULL
-			);
+			NULL, NULL, hinstance_, NULL);
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);
+
+		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
 	}
 
 	window::~window()
@@ -101,6 +73,7 @@ namespace nif
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
+			keyboard_.update();
 
 			while (lag >= updateRate)
 			{
@@ -114,6 +87,11 @@ namespace nif
 		}
 	}
 
+	void window::close()
+	{
+		PostMessage(hwnd_, WM_CLOSE, 0, 0);
+	}
+
 	window::timeevent& window::update()
 	{
 		return update_;
@@ -122,6 +100,11 @@ namespace nif
 	window::timeevent & window::draw()
 	{
 		return draw_;
+	}
+
+	keyboard::keyevent &window::keyhit(const keys key)
+	{
+		return keyboard_.keyhit(key);
 	}
 
 	HWND window::hwnd()
@@ -142,5 +125,51 @@ namespace nif
 	int window::height() const
 	{
 		return height_;
+	}
+
+	LRESULT CALLBACK window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message)
+		{
+		case WM_COMMAND:
+		{
+			int wmId = LOWORD(wParam);
+			// Parse the menu selections:
+			switch (wmId)
+			{
+			default:
+				return DefWindowProc(hWnd, message, wParam, lParam);
+			}
+		}
+		break;
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			// TODO: Add any drawing code that uses hdc here...
+			EndPaint(hWnd, &ps);
+		}
+		break;
+		case WM_KEYDOWN:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().keyboard_.set_key(wParam, lParam, true);
+		}
+		break;
+		case WM_KEYUP:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().keyboard_.set_key(wParam, lParam, false);
+		}
+		break;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+		return 0;
 	}
 }

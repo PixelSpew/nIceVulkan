@@ -133,6 +133,10 @@ int main()
 	uint32_t currentBuffer = 0;
 	command_buffer postPresentCmdBuffer(cmdpool);
 
+	win.keyhit(keys::escape).add([&]() {
+		win.close();
+	});
+
 	win.draw().add([&](double delta) {
 		vkdevice.wait_queue_idle();
 
