@@ -126,6 +126,9 @@
     <ClInclude Include="inc\vkwrap\win32_surface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\util\dispatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

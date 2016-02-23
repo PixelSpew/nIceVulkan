@@ -45,7 +45,7 @@ int main()
 	device vkdevice(vkinstance);
 
 	vector<vertex> vertices = { { vec3(1, 1, 0) }, { vec3(-1, 1, 0) }, { vec3(0, -1, 0) } };
-	vertex_buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
+	buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
 
 	std::vector<unsigned int> indices = { 0, 1, 2 };
 	buffer<uint32_t> ibuffer(vkdevice, vk::BufferUsageFlagBits::eIndexBuffer, indices);
@@ -133,16 +133,18 @@ int main()
 	uint32_t currentBuffer = 0;
 	command_buffer postPresentCmdBuffer(cmdpool);
 
-	//game loop begin
-	semaphore presentCompleteSemaphore(vkdevice);
-	swap.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
-	drawCmdBuffers[currentBuffer].submit(vkdevice);
-	swap.queuePresent(currentBuffer);
-	
-	postPresentCmdBuffer.begin();
-	postPresentCmdBuffer.pipeline_barrier(swap.buffers()[currentBuffer]->image);
-	postPresentCmdBuffer.end();
-	postPresentCmdBuffer.submit(vkdevice);
-	vkdevice.wait_queue_idle();
-	//end game loop
+	win.draw().add([&](double delta) {
+		vkdevice.wait_queue_idle();
+
+		semaphore presentCompleteSemaphore(vkdevice);
+		swap.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
+		drawCmdBuffers[currentBuffer].submit(vkdevice);
+		swap.queuePresent(currentBuffer);
+
+		postPresentCmdBuffer.begin();
+		postPresentCmdBuffer.pipeline_barrier(swap.buffers()[currentBuffer]->image);
+		postPresentCmdBuffer.end();
+		postPresentCmdBuffer.submit(vkdevice);
+	});
+	win.run(60);
 }

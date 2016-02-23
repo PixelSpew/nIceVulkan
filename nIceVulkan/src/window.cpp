@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "window.h"
+#include <chrono>
+
+using namespace std;
 
 namespace nif
 {
@@ -74,6 +77,51 @@ namespace nif
 	window::~window()
 	{
 		DestroyWindow(hwnd_);
+	}
+
+	void window::run(double updateRate)
+	{
+		typedef chrono::high_resolution_clock clock;
+
+		auto previous = clock::now();
+		double lag = 0.0;
+		while (true)
+		{
+			auto current = clock::now();
+			double elapsed = chrono::duration_cast<chrono::nanoseconds>(current - previous).count() / 1000000000.0;
+			previous = current;
+			lag += elapsed;
+
+			MSG msg;
+			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+			{
+				if (msg.message == WM_QUIT)
+					return;
+
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+
+			while (lag >= updateRate)
+			{
+				update_(updateRate);
+				lag -= updateRate;
+			}
+
+			elapsed += chrono::duration_cast<chrono::nanoseconds>(clock::now() - previous).count() / 1000000000.0;
+
+			draw_(elapsed);
+		}
+	}
+
+	window::timeevent& window::update()
+	{
+		return update_;
+	}
+
+	window::timeevent & window::draw()
+	{
+		return draw_;
 	}
 
 	HWND window::hwnd()

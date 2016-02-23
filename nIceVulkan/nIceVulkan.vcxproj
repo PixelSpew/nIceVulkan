@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="inc\util\dispatcher.h" />
     <ClInclude Include="inc\vkwrap\buffer.h" />
     <ClInclude Include="inc\vkwrap\command_buffer.h" />
     <ClInclude Include="inc\vkwrap\command_pool.h" />

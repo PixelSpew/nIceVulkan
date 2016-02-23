@@ -30,14 +30,4 @@ namespace nif
 			: ibuffer(device, flags, data.data(), data.size() * sizeof(T)) {}
 		~buffer() {}
 	};
-
-	template<typename T>
-	class vertex_buffer : public buffer<T>
-	{
-	public:
-		vertex_buffer(const device &device, const vk::BufferUsageFlags flags, const std::vector<T> &data)
-			: buffer<T>(device, flags, data)
-		{
-		}
-	};
 }
