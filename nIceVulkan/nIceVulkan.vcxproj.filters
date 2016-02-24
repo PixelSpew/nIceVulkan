@@ -132,6 +132,9 @@
     <ClInclude Include="inc\keyboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\mouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -236,7 +239,10 @@
     <ClCompile Include="src\vkwrap\win32_surface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inc\keyboard.cpp">
+    <ClCompile Include="src\keyboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inc\mouse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,15 +3,9 @@
 
 namespace nif {
 	keyboard::keyboard() : keys_(256, false), keyhit_events_(256) {
-
 	}
 
 	keyboard::~keyboard() {
-
-	}
-
-	keyboard::keyevent& keyboard::keyhit(const keys key) {
-		return keyhit_events_[static_cast<int>(key)];
 	}
 
 	void keyboard::update() {
@@ -39,5 +33,9 @@ namespace nif {
 
 		if (down && !prev)
 			keyhits_.push(static_cast<keys>(new_vk));
+	}
+
+	keyboard::keyevent& keyboard::keyhit(const keys key) {
+		return keyhit_events_[static_cast<int>(key)];
 	}
 }

@@ -1,7 +1,6 @@
 #pragma once
-#include "util/dispatcher.h"
 #include "keyboard.h"
-#include <Windows.h>
+#include "mouse.h"
 
 namespace nif
 {
@@ -19,6 +18,7 @@ namespace nif
 		timeevent& update();
 		timeevent& draw();
 		keyboard::keyevent& keyhit(const keys key);
+		mouse::buttonevent& buttonhit(const buttons button);
 		HWND hwnd();
 		HINSTANCE hinstance();
 		int width() const;
@@ -30,6 +30,7 @@ namespace nif
 		HWND hwnd_;
 		HINSTANCE hinstance_;
 		keyboard keyboard_;
+		mouse mouse_;
 		int width_ = 1440;
 		int height_ = 810;
 		timeevent update_;

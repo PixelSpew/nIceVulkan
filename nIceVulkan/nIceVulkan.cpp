@@ -137,6 +137,10 @@ int main()
 		win.close();
 	});
 
+	win.buttonhit(buttons::left).add([&]() {
+		win.close();
+	});
+
 	win.draw().add([&](double delta) {
 		vkdevice.wait_queue_idle();
 
