@@ -3,8 +3,9 @@
 #include "window.h"
 #include "util/file.h"
 #include "vkwrap/swap_chain.h"
-#include <iostream>
+#include "mesh.h"
 #include "tiny_obj_loader.h"
+#include <iostream>
 
 using namespace std;
 using namespace nif;
@@ -63,8 +64,7 @@ int main() {
 		indices.push_back({ shapes[0].mesh.indices[i] });
 	}
 
-	buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
-	buffer<uint32_t> ibuffer(vkdevice, vk::BufferUsageFlagBits::eIndexBuffer, indices);
+	mesh<vertex> sphere(vkdevice, vertices, indices);
 
 	window win;
 	render_pass renderpass(vkdevice);
@@ -136,9 +136,9 @@ int main() {
 		drawCmdBuffers[i].set_scissor(0, 0, width, height);
 		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
 		drawCmdBuffers[i].bind_pipeline(solidPipeline);
-		drawCmdBuffers[i].bind_vertex_buffer(vbuffer);
-		drawCmdBuffers[i].bind_index_buffer(ibuffer);
-		drawCmdBuffers[i].draw_indexed(static_cast<uint32_t>(indices.size()));
+		drawCmdBuffers[i].bind_vertex_buffer(sphere.vertex_buffer());
+		drawCmdBuffers[i].bind_index_buffer(sphere.index_buffer());
+		drawCmdBuffers[i].draw_indexed(sphere.index_count());
 		drawCmdBuffers[i].end_render_pass();
 		drawCmdBuffers[i].pipeline_barrier(swap.buffers()[i]->image);
 		drawCmdBuffers[i].end();
