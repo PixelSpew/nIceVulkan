@@ -24,7 +24,17 @@ namespace nif
 
 	ibuffer::~ibuffer()
 	{
-		vk::destroyBuffer(device_.handle(), handle_, nullptr);
+		if (handle_ != nullptr)
+			vk::destroyBuffer(device_.handle(), handle_, nullptr);
+	}
+
+	ibuffer::ibuffer(ibuffer &&old)
+		: device_(old.device_),
+		handle_(old.handle_),
+		gpumem_(move(old.gpumem_)),
+		size_(old.size_)
+	{
+		old.handle_ = nullptr;
 	}
 
 	vk::Buffer ibuffer::handle() const

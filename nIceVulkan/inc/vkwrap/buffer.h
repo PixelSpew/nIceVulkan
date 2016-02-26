@@ -8,6 +8,7 @@ namespace nif
 	{
 	public:
 		ibuffer(const ibuffer&) = delete;
+		ibuffer(ibuffer &&old);
 		vk::Buffer handle() const;
 		size_t size() const;
 
@@ -28,6 +29,7 @@ namespace nif
 	public:
 		buffer(const device &device, const vk::BufferUsageFlags flags, const std::vector<T> &data)
 			: ibuffer(device, flags, data.data(), data.size() * sizeof(T)) {}
+		buffer(buffer<T> &&old) : ibuffer(move(old)) {}
 		~buffer() {}
 	};
 }

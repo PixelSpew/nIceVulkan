@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="inc\keyboard.h" />
     <ClInclude Include="inc\mesh.h" />
+    <ClInclude Include="inc\model.h" />
     <ClInclude Include="inc\mouse.h" />
     <ClInclude Include="inc\util\dispatcher.h" />
     <ClInclude Include="inc\vkwrap\buffer.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="inc\model.cpp" />
     <ClCompile Include="src\mouse.cpp" />
     <ClCompile Include="src\keyboard.cpp" />
     <ClCompile Include="src\util\directory.cpp" />

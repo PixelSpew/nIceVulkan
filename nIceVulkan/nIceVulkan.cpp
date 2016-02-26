@@ -3,7 +3,7 @@
 #include "window.h"
 #include "util/file.h"
 #include "vkwrap/swap_chain.h"
-#include "mesh.h"
+#include "model.h"
 #include "tiny_obj_loader.h"
 #include <iostream>
 
@@ -11,60 +11,11 @@ using namespace std;
 using namespace nif;
 using namespace tinyobj;
 
-struct vertex
-{
-	vec3 pos;
-
-	static const vector<vk::VertexInputBindingDescription>& binding_descriptions()
-	{
-		static const vector<vk::VertexInputBindingDescription> bindDescs =
-		{
-			vk::VertexInputBindingDescription(0, sizeof(vertex), vk::VertexInputRate::eVertex)
-		};
-
-		return bindDescs;
-	}
-
-	static const vector<vk::VertexInputAttributeDescription>& attribute_descriptions()
-	{
-		static const vector<vk::VertexInputAttributeDescription> attribDescs =
-		{
-			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, 0)
-		};
-
-		return attribDescs;
-	}
-
-	static const vk::PipelineVertexInputStateCreateInfo& pipeline_info()
-	{
-		static const vk::PipelineVertexInputStateCreateInfo pipelineInfo(0, 1, binding_descriptions().data(), 1, attribute_descriptions().data());
-		return pipelineInfo;
-	}
-};
-
 int main() {
 	instance vkinstance("nIce Framework");
 	device vkdevice(vkinstance);
 
-	vector<shape_t> shapes;
-	vector<material_t> materials;
-	vector<vertex> vertices;
-	vector<unsigned int> indices;
-
-	string err;
-	bool ret = LoadObj(shapes, materials, err, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
-
-	vertices.reserve(shapes[0].mesh.positions.size() / 3);
-	for (size_t i = 0; i < shapes[0].mesh.positions.size(); i += 3) {
-		vertices.push_back({ vec3(shapes[0].mesh.positions[i], shapes[0].mesh.positions[i + 1], shapes[0].mesh.positions[i + 2]) });
-	}
-
-	indices.reserve(shapes[0].mesh.indices.size());
-	for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++) {
-		indices.push_back({ shapes[0].mesh.indices[i] });
-	}
-
-	mesh<vertex> sphere(vkdevice, vertices, indices);
+	model sphere(vkdevice, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
 	window win;
 	render_pass renderpass(vkdevice);
@@ -126,7 +77,7 @@ int main() {
 	shaderModules.push_back(shader_module(vkdevice, file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
 
 	pipeline_cache pipelineCache(vkdevice);
-	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, vertex::pipeline_info(), pipelineCache);
+	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, model::vertex::pipeline_info(), pipelineCache);
 
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
@@ -136,9 +87,9 @@ int main() {
 		drawCmdBuffers[i].set_scissor(0, 0, width, height);
 		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
 		drawCmdBuffers[i].bind_pipeline(solidPipeline);
-		drawCmdBuffers[i].bind_vertex_buffer(sphere.vertex_buffer());
-		drawCmdBuffers[i].bind_index_buffer(sphere.index_buffer());
-		drawCmdBuffers[i].draw_indexed(sphere.index_count());
+		drawCmdBuffers[i].bind_vertex_buffer(sphere.meshes()[0].vertex_buffer());
+		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
+		drawCmdBuffers[i].draw_indexed(sphere.meshes()[0].index_count());
 		drawCmdBuffers[i].end_render_pass();
 		drawCmdBuffers[i].pipeline_barrier(swap.buffers()[i]->image);
 		drawCmdBuffers[i].end();
