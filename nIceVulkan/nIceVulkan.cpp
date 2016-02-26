@@ -4,9 +4,11 @@
 #include "util/file.h"
 #include "vkwrap/swap_chain.h"
 #include <iostream>
+#include "tiny_obj_loader.h"
 
 using namespace std;
 using namespace nif;
+using namespace tinyobj;
 
 struct vertex
 {
@@ -34,20 +36,34 @@ struct vertex
 
 	static const vk::PipelineVertexInputStateCreateInfo& pipeline_info()
 	{
-		static const vk::PipelineVertexInputStateCreateInfo pipelineInfo( 0, 1, binding_descriptions().data(), 1, attribute_descriptions().data());
+		static const vk::PipelineVertexInputStateCreateInfo pipelineInfo(0, 1, binding_descriptions().data(), 1, attribute_descriptions().data());
 		return pipelineInfo;
 	}
 };
 
-int main()
-{
+int main() {
 	instance vkinstance("nIce Framework");
 	device vkdevice(vkinstance);
 
-	vector<vertex> vertices = { { vec3(1, 1, 0) }, { vec3(-1, 1, 0) }, { vec3(0, -1, 0) } };
-	buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
+	vector<shape_t> shapes;
+	vector<material_t> materials;
+	vector<vertex> vertices;
+	vector<unsigned int> indices;
 
-	std::vector<unsigned int> indices = { 0, 1, 2 };
+	string err;
+	bool ret = LoadObj(shapes, materials, err, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
+
+	vertices.reserve(shapes[0].mesh.positions.size() / 3);
+	for (size_t i = 0; i < shapes[0].mesh.positions.size(); i += 3) {
+		vertices.push_back({ vec3(shapes[0].mesh.positions[i], shapes[0].mesh.positions[i + 1], shapes[0].mesh.positions[i + 2]) });
+	}
+
+	indices.reserve(shapes[0].mesh.indices.size());
+	for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++) {
+		indices.push_back({ shapes[0].mesh.indices[i] });
+	}
+
+	buffer<vertex> vbuffer(vkdevice, vk::BufferUsageFlagBits::eVertexBuffer, vertices);
 	buffer<uint32_t> ibuffer(vkdevice, vk::BufferUsageFlagBits::eIndexBuffer, indices);
 
 	window win;

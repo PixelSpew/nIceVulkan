@@ -146,33 +146,37 @@ namespace nif
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, true);
 		}
+		break;
 		case WM_LBUTTONUP: {
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, false);
 		}
+		break;
 		case WM_RBUTTONDOWN: {
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, true);
 		}
+		break;
 		case WM_RBUTTONUP: {
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, false);
 		}
-		case WM_MBUTTONDOWN:
-		{
+		break;
+		case WM_MBUTTONDOWN: {
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, true);
 		}
-		case WM_MBUTTONUP:
-		{
+		break;
+		case WM_MBUTTONUP: {
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, false);
 		}
+		break;
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
