@@ -8,6 +8,7 @@ namespace nif
 	public:
 		image_view(const image &image, const vk::Format format, vk::ImageAspectFlags aspectFlags);
 		image_view(const image_view&) = delete;
+		image_view(image_view &&old);
 		~image_view();
 		vk::ImageView handle() const;
 

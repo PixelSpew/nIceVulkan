@@ -32,9 +32,14 @@ namespace nif
 	{
 	}
 
+	image::image(image &&old)
+		: handle_(old.handle_),
+		  gpumem_(move(old.gpumem_)),
+		  device_(old.device_) {}
+
 	image::~image()
 	{
-		if (gpumem_.handle())	// if the handle is managed externally, gpumem_ will be empty
+		if (gpumem_.handle())
 			vk::destroyImage(device_.handle(), handle_, nullptr);
 	}
 

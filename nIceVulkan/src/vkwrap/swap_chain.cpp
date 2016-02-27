@@ -10,6 +10,11 @@ namespace nif
 	{
 	}
 
+	swap_chain::buffer::buffer(buffer &&old)
+		: image(move(old.image)), view(move(old.view))
+	{
+	}
+
 	swap_chain::swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
 		: device_(device), surface_(device, platformHandle, platformWindow)
 	{
@@ -125,12 +130,12 @@ namespace nif
 		if (vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, swapchainImages.data()) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 
-		buffers_.resize(image_count_);
+		buffers_.reserve(image_count_);
 		for (uint32_t i = 0; i < image_count_; i++)
 		{
-			buffers_[i] = unique_ptr<buffer>(new buffer(device_, swapchainImages[i], colorFormat));
+			buffers_.push_back(buffer(device_, swapchainImages[i], colorFormat));
 			cmdBuffer.setImageLayout(
-				buffers_[i]->image,
+				buffers_[i].image,
 				vk::ImageAspectFlagBits::eColor,
 				vk::ImageLayout::eUndefined,
 				static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
@@ -171,7 +176,7 @@ namespace nif
 		return image_count_;
 	}
 
-	const vector<unique_ptr<swap_chain::buffer>>& swap_chain::buffers() const
+	const vector<swap_chain::buffer>& swap_chain::buffers() const
 	{
 		return buffers_;
 	}

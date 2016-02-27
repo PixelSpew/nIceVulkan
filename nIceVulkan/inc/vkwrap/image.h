@@ -13,6 +13,7 @@ namespace nif
 		*/
 		image(const device &device, const vk::Image handle);
 		image(const image&) = delete;
+		image(image &&old);
 		~image();
 		vk::Image handle() const;
 		const device& parent_device() const;

@@ -17,9 +17,17 @@ namespace nif
 			throw runtime_error("fail");
 	}
 
+	image_view::image_view(image_view &&old)
+		: handle_(old.handle_),
+		  device_(old.device_)
+	{
+		old.handle_ = nullptr;
+	}
+
 	image_view::~image_view()
 	{
-		vk::destroyImageView(device_.handle(), handle_, nullptr);
+		if (handle_)
+			vk::destroyImageView(device_.handle(), handle_, nullptr);
 	}
 
 	vk::ImageView image_view::handle() const

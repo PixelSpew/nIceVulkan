@@ -9,6 +9,7 @@ namespace nif
 		struct buffer
 		{
 			buffer(const device &device, const vk::Image imghandle, const vk::Format format);
+			buffer(buffer &&old);
 
 			image image;
 			image_view view;
@@ -25,7 +26,7 @@ namespace nif
 
 		const win32_surface& surface() const;
 		uint32_t image_count() const;
-		const std::vector<std::unique_ptr<buffer>>& buffers() const;
+		const std::vector<buffer>& buffers() const;
 		const device& parent_device() const;
 
 	private:
@@ -35,7 +36,7 @@ namespace nif
 		vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
 
 		uint32_t image_count_;
-		std::vector<std::unique_ptr<buffer>> buffers_;
+		std::vector<buffer> buffers_;
 		const device &device_;
 	};
 }

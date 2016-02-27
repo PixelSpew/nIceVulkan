@@ -24,7 +24,7 @@ int main() {
 
 	std::vector<framebuffer> framebuffers;
 	for (uint32_t i = 0; i < win.vk_swap_chain().image_count(); i++)
-		framebuffers.push_back(framebuffer(win.vk_width(), win.vk_height(), renderpass, { win.vk_swap_chain().buffers()[i]->view, win.depth_stencil_view() }));
+		framebuffers.push_back(framebuffer(win.vk_width(), win.vk_height(), renderpass, { win.vk_swap_chain().buffers()[i].view, win.depth_stencil_view() }));
 
 	vector<descriptor_set_layout> descriptorSetLayouts;
 	descriptorSetLayouts.push_back(descriptor_set_layout(win.vk_device()));
@@ -64,7 +64,7 @@ int main() {
 		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
 		drawCmdBuffers[i].draw_indexed(sphere.meshes()[0].index_count());
 		drawCmdBuffers[i].end_render_pass();
-		drawCmdBuffers[i].pipeline_barrier(win.vk_swap_chain().buffers()[i]->image);
+		drawCmdBuffers[i].pipeline_barrier(win.vk_swap_chain().buffers()[i].image);
 		drawCmdBuffers[i].end();
 	}
 
@@ -90,7 +90,7 @@ int main() {
 		win.vk_swap_chain().queuePresent(currentBuffer);
 
 		postPresentCmdBuffer.begin();
-		postPresentCmdBuffer.pipeline_barrier(win.vk_swap_chain().buffers()[currentBuffer]->image);
+		postPresentCmdBuffer.pipeline_barrier(win.vk_swap_chain().buffers()[currentBuffer].image);
 		postPresentCmdBuffer.end();
 		postPresentCmdBuffer.submit(win.vk_device());
 	});
