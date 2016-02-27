@@ -8,10 +8,11 @@ namespace nif
 	class instance
 	{
 	public:
-		instance(const std::string &name);
+		explicit instance(const std::string &name);
 		instance(const instance&) = delete;
 		instance(instance &&old);
 		~instance();
+
 		vk::Instance handle() const;
 		static const std::vector<const char*>& layers();
 

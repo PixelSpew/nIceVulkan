@@ -6,7 +6,7 @@ namespace nif
 	class pipeline_cache
 	{
 	public:
-		pipeline_cache(const device &device);
+		explicit pipeline_cache(const device &device);
 		pipeline_cache(const pipeline_cache&) = delete;
 		~pipeline_cache();
 		vk::PipelineCache handle() const;

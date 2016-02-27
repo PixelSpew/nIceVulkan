@@ -6,7 +6,7 @@ namespace nif
 	class semaphore
 	{
 	public:
-		semaphore(const device &device);
+		explicit semaphore(const device &device);
 		semaphore(const semaphore&) = delete;
 		~semaphore();
 		vk::Semaphore handle() const;

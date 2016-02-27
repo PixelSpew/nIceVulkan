@@ -6,7 +6,7 @@ namespace nif
 	class descriptor_pool
 	{
 	public:
-		descriptor_pool(const device &device);
+		explicit descriptor_pool(const device &device);
 		descriptor_pool(const descriptor_pool&) = delete;
 		~descriptor_pool();
 		vk::DescriptorPool handle() const;

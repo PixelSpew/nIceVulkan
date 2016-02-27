@@ -6,7 +6,7 @@ namespace nif
 	class device
 	{
 	public:
-		device(const instance &instance);
+		explicit device(const instance &instance);
 		device(const device&) = delete;
 		~device();
 		void wait_queue_idle() const;

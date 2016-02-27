@@ -8,7 +8,7 @@ namespace nif
 	class descriptor_set
 	{
 	public:
-		descriptor_set(const std::vector<descriptor_set_layout> &setLayouts, const descriptor_pool &pool, const ibuffer &buffer);
+		explicit descriptor_set(const std::vector<descriptor_set_layout> &setLayouts, const descriptor_pool &pool, const ibuffer &buffer);
 		descriptor_set(const descriptor_set&) = delete;
 		~descriptor_set();
 		size_t size() const;

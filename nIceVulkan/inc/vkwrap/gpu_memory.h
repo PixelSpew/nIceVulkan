@@ -6,6 +6,9 @@ namespace nif
 	class gpu_memory
 	{
 	public:
+		/**
+		* Creates an empty instance with a null handle
+		*/
 		gpu_memory();
 		gpu_memory(const device &device, const vk::MemoryRequirements &memreqs, const vk::MemoryPropertyFlags &memtype, const void *data);
 		gpu_memory(const gpu_memory&) = delete;

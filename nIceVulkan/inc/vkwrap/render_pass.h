@@ -6,7 +6,7 @@ namespace nif
 	class render_pass
 	{
 	public:
-		render_pass(const device &device);
+		explicit render_pass(const device &device);
 		render_pass(const render_pass&) = delete;
 		~render_pass();
 		vk::RenderPass handle() const;

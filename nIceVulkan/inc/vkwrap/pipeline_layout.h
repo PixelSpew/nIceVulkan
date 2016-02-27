@@ -6,7 +6,7 @@ namespace nif
 	class pipeline_layout
 	{
 	public:
-		pipeline_layout(const std::vector<descriptor_set_layout> &descSetLayouts);
+		explicit pipeline_layout(const std::vector<descriptor_set_layout> &descSetLayouts);
 		pipeline_layout(const pipeline_layout&) = delete;
 		~pipeline_layout();
 		vk::PipelineLayout handle() const;
