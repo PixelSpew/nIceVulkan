@@ -22,8 +22,8 @@ namespace nif
 
 		vk::MemoryRequirements memreqs;
 		vk::getImageMemoryRequirements(device.handle(), handle_, &memreqs);
-		gpumem_ = unique_ptr<gpu_memory>(new gpu_memory(device, memreqs, vk::MemoryPropertyFlagBits::eDeviceLocal, nullptr));
-		if (vk::bindImageMemory(device.handle(), handle_, gpumem_->handle(), 0) != vk::Result::eVkSuccess)
+		gpumem_ = gpu_memory(device, memreqs, vk::MemoryPropertyFlagBits::eDeviceLocal, nullptr);
+		if (vk::bindImageMemory(device.handle(), handle_, gpumem_.handle(), 0) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 	}
 
@@ -34,7 +34,7 @@ namespace nif
 
 	image::~image()
 	{
-		if (gpumem_)	// if the handle is managed externally, gpumem_ will be empty
+		if (gpumem_.handle())	// if the handle is managed externally, gpumem_ will be empty
 			vk::destroyImage(device_.handle(), handle_, nullptr);
 	}
 

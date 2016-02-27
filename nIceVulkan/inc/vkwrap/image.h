@@ -19,7 +19,7 @@ namespace nif
 
 	private:
 		vk::Image handle_;
-		std::unique_ptr<gpu_memory> gpumem_;
+		gpu_memory gpumem_;
 		const device &device_;
 	};
 }
