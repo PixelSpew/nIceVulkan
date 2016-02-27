@@ -46,6 +46,22 @@ namespace nif
 		UpdateWindow(hwnd_);
 
 		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
+
+		swap_ = unique_ptr<swap_chain>(new swap_chain(device_, hinstance_, hwnd_));
+
+		cmdpool_ = unique_ptr<command_pool>(new command_pool(swap_->surface()));
+		command_buffer setupCmdBuffer(*cmdpool_);
+		setupCmdBuffer.begin();
+		swap_->setup(setupCmdBuffer, &vk_width_, &vk_height_);
+
+		depth_stencil_image_ = unique_ptr<image>(new image(width_, height_, device_));
+		depth_stencil_view_ = unique_ptr<image_view>(new image_view(*depth_stencil_image_, device_.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
+
+		setupCmdBuffer.setImageLayout(*depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+		setupCmdBuffer.end();
+		setupCmdBuffer.submit(device_);
+		device_.wait_queue_idle();
 	}
 
 	window::~window()
@@ -130,6 +146,31 @@ namespace nif
 	const device& window::vk_device() const
 	{
 		return device_;
+	}
+
+	const command_pool& window::vk_command_pool() const
+	{
+		return *cmdpool_;
+	}
+
+	const image_view & window::depth_stencil_view() const
+	{
+		return *depth_stencil_view_;
+	}
+
+	uint32_t window::vk_width() const
+	{
+		return vk_width_;
+	}
+
+	uint32_t window::vk_height() const
+	{
+		return vk_height_;
+	}
+
+	const swap_chain& window::vk_swap_chain() const
+	{
+		return *swap_;
 	}
 
 	int window::width() const

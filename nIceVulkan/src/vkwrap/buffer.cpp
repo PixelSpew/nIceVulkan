@@ -17,8 +17,8 @@ namespace nif
 
 		vk::MemoryRequirements memreq;
 		vk::getBufferMemoryRequirements(device.handle(), handle_, &memreq);
-		gpumem_ = unique_ptr<gpu_memory>(new gpu_memory(device, memreq, vk::MemoryPropertyFlagBits::eHostVisible, data));
-		if (vk::bindBufferMemory(device.handle(), handle_, gpumem_->handle(), 0) != vk::Result::eVkSuccess)
+		gpumem_ = gpu_memory(device, memreq, vk::MemoryPropertyFlagBits::eHostVisible, data);
+		if (vk::bindBufferMemory(device.handle(), handle_, gpumem_.handle(), 0) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 	}
 

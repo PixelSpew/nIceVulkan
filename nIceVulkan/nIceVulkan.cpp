@@ -15,41 +15,16 @@ int main() {
 
 	window win;
 	render_pass renderpass(win.vk_device());
-	swap_chain swap(win.vk_device(), win.hinstance(), win.hwnd());
 
 	model sphere(win.vk_device(), "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
-	command_pool cmdpool(swap.surface());
-
-	command_buffer setupCmdBuffer(cmdpool);
-	setupCmdBuffer.begin();
-
-	uint32_t width = win.width();
-	uint32_t height = win.height();
-	swap.setup(setupCmdBuffer, &width, &height);
-
 	std::vector<command_buffer> drawCmdBuffers;
-	for (uint32_t i = 0; i < swap.image_count(); i++)
-		drawCmdBuffers.push_back(command_buffer(cmdpool));
-
-	//setup depth stencil
-	struct
-	{
-		unique_ptr<image> image;
-		unique_ptr<image_view> view;
-	} depthStencil;
-
-	depthStencil.image = unique_ptr<image>(new image(width, height, win.vk_device()));
-	setupCmdBuffer.setImageLayout(*depthStencil.image, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	depthStencil.view = unique_ptr<image_view>(new image_view(*depthStencil.image, win.vk_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
+	for (uint32_t i = 0; i < win.vk_swap_chain().image_count(); i++)
+		drawCmdBuffers.push_back(command_buffer(win.vk_command_pool()));
 
 	std::vector<framebuffer> framebuffers;
-	for (uint32_t i = 0; i < swap.image_count(); i++)
-		framebuffers.push_back(framebuffer(width, height, renderpass, { swap.buffers()[i]->view, *depthStencil.view }));
-
-	setupCmdBuffer.end();
-	setupCmdBuffer.submit(win.vk_device());
-	win.vk_device().wait_queue_idle();
+	for (uint32_t i = 0; i < win.vk_swap_chain().image_count(); i++)
+		framebuffers.push_back(framebuffer(win.vk_width(), win.vk_height(), renderpass, { win.vk_swap_chain().buffers()[i]->view, win.depth_stencil_view() }));
 
 	vector<descriptor_set_layout> descriptorSetLayouts;
 	descriptorSetLayouts.push_back(descriptor_set_layout(win.vk_device()));
@@ -63,7 +38,7 @@ int main() {
 		mat4 viewMatrix;
 	} uboVS;
 
-	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(width), static_cast<float>(height), 0.1f, 256.0f);
+	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(win.vk_width()), static_cast<float>(win.vk_height()), 0.1f, 256.0f);
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
@@ -80,23 +55,23 @@ int main() {
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
 		drawCmdBuffers[i].begin();
-		drawCmdBuffers[i].begin_render_pass(renderpass, framebuffers[i], width, height);
-		drawCmdBuffers[i].set_viewport(static_cast<float>(width), static_cast<float>(height));
-		drawCmdBuffers[i].set_scissor(0, 0, width, height);
+		drawCmdBuffers[i].begin_render_pass(renderpass, framebuffers[i], win.vk_width(), win.vk_height());
+		drawCmdBuffers[i].set_viewport(static_cast<float>(win.vk_width()), static_cast<float>(win.vk_height()));
+		drawCmdBuffers[i].set_scissor(0, 0, win.vk_width(), win.vk_height());
 		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
 		drawCmdBuffers[i].bind_pipeline(solidPipeline);
 		drawCmdBuffers[i].bind_vertex_buffer(sphere.meshes()[0].vertex_buffer());
 		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
 		drawCmdBuffers[i].draw_indexed(sphere.meshes()[0].index_count());
 		drawCmdBuffers[i].end_render_pass();
-		drawCmdBuffers[i].pipeline_barrier(swap.buffers()[i]->image);
+		drawCmdBuffers[i].pipeline_barrier(win.vk_swap_chain().buffers()[i]->image);
 		drawCmdBuffers[i].end();
 	}
 
 	/////////
 
 	uint32_t currentBuffer = 0;
-	command_buffer postPresentCmdBuffer(cmdpool);
+	command_buffer postPresentCmdBuffer(win.vk_command_pool());
 
 	win.keyhit(keys::escape).add([&]() {
 		win.close();
@@ -110,12 +85,12 @@ int main() {
 		win.vk_device().wait_queue_idle();
 
 		semaphore presentCompleteSemaphore(win.vk_device());
-		swap.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
+		currentBuffer = win.vk_swap_chain().acquireNextImage(presentCompleteSemaphore, currentBuffer);
 		drawCmdBuffers[currentBuffer].submit(win.vk_device());
-		swap.queuePresent(currentBuffer);
+		win.vk_swap_chain().queuePresent(currentBuffer);
 
 		postPresentCmdBuffer.begin();
-		postPresentCmdBuffer.pipeline_barrier(swap.buffers()[currentBuffer]->image);
+		postPresentCmdBuffer.pipeline_barrier(win.vk_swap_chain().buffers()[currentBuffer]->image);
 		postPresentCmdBuffer.end();
 		postPresentCmdBuffer.submit(win.vk_device());
 	});

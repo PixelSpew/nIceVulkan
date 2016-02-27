@@ -5,8 +5,11 @@ using namespace std;
 
 namespace nif
 {
+	gpu_memory::gpu_memory()
+		: handle_(nullptr) {}
+
 	gpu_memory::gpu_memory(const device &device, const vk::MemoryRequirements &memreqs, const vk::MemoryPropertyFlags &memtype, const void *data)
-		: device_(device)
+		: device_(&device)
 	{
 		vk::MemoryAllocateInfo mem_alloc;
 		mem_alloc.allocationSize(memreqs.size());
@@ -38,13 +41,32 @@ namespace nif
 		}
 	}
 
+	gpu_memory::gpu_memory(gpu_memory &&old)
+		: handle_(old.handle_),
+		  device_(old.device_)
+	{
+		old.handle_ = nullptr;
+	}
+
 	gpu_memory::~gpu_memory()
 	{
-		vk::freeMemory(device_.handle(), handle_, nullptr);
+		if (handle_ != nullptr)
+			vk::freeMemory(device_->handle(), handle_, nullptr);
 	}
 
 	vk::DeviceMemory gpu_memory::handle() const
 	{
 		return handle_;
+	}
+
+	gpu_memory& gpu_memory::operator=(gpu_memory &&rhs)
+	{
+		if (handle_ != rhs.handle_) {
+			handle_ = rhs.handle_;
+			device_ = rhs.device_;
+			rhs.handle_ = nullptr;
+		}
+
+		return *this;
 	}
 }

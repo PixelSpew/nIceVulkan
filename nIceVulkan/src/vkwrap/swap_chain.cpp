@@ -137,13 +137,15 @@ namespace nif
 		}
 	}
 
-	void swap_chain::acquireNextImage(const semaphore &semaphore, uint32_t *currentBuffer)
+	uint32_t swap_chain::acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const
 	{
-		if (vk::acquireNextImageKHR(device_.handle(), swapChain, UINT64_MAX, semaphore.handle(), nullptr, currentBuffer) != vk::Result::eVkSuccess)
+		uint32_t ret = currentBuffer;
+		if (vk::acquireNextImageKHR(device_.handle(), swapChain, UINT64_MAX, semaphore.handle(), nullptr, &ret) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
+		return ret;
 	}
 
-	void swap_chain::queuePresent(uint32_t currentBuffer)
+	void swap_chain::queuePresent(const uint32_t currentBuffer) const
 	{
 		vk::PresentInfoKHR presentInfo;
 		presentInfo.swapchainCount(1);

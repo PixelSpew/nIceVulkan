@@ -158,12 +158,12 @@ namespace nif
 	void command_buffer::setImageLayout(const image &image, const vk::ImageAspectFlags &aspectMask, const vk::ImageLayout oldImageLayout, const vk::ImageLayout newImageLayout)
 	{
 		vk::ImageMemoryBarrier imgMemBarrier;
-		imgMemBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		imgMemBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 		imgMemBarrier.oldLayout(oldImageLayout);
 		imgMemBarrier.newLayout(newImageLayout);
-		imgMemBarrier.image(image.handle());
+		imgMemBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+		imgMemBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
 		imgMemBarrier.subresourceRange(vk::ImageSubresourceRange(aspectMask, 0, 1, 0, 1));
+		imgMemBarrier.image(image.handle());
 
 		if (oldImageLayout == vk::ImageLayout::eUndefined)
 			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite);
