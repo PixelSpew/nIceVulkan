@@ -1,6 +1,7 @@
 #pragma once
 #include "keyboard.h"
 #include "mouse.h"
+#include "vkwrap/device.h"
 
 namespace nif
 {
@@ -19,8 +20,10 @@ namespace nif
 		timeevent& draw();
 		keyboard::keyevent& keyhit(const keys key);
 		mouse::buttonevent& buttonhit(const buttons button);
-		HWND hwnd();
-		HINSTANCE hinstance();
+		const HWND hwnd() const;
+		const HINSTANCE hinstance() const;
+		const instance& vk_instance() const;
+		const device& vk_device() const;
 		int width() const;
 		int height() const;
 
@@ -29,6 +32,8 @@ namespace nif
 	private:
 		HWND hwnd_;
 		HINSTANCE hinstance_;
+		instance instance_;
+		device device_;
 		keyboard keyboard_;
 		mouse mouse_;
 		int width_ = 1440;

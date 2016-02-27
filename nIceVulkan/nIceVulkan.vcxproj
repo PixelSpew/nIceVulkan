@@ -189,7 +189,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="inc\model.cpp" />
+    <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\mouse.cpp" />
     <ClCompile Include="src\keyboard.cpp" />
     <ClCompile Include="src\util\directory.cpp" />

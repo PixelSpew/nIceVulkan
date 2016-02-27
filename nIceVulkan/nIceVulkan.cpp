@@ -12,14 +12,12 @@ using namespace nif;
 using namespace tinyobj;
 
 int main() {
-	instance vkinstance("nIce Framework");
-	device vkdevice(vkinstance);
-
-	model sphere(vkdevice, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
 	window win;
-	render_pass renderpass(vkdevice);
-	swap_chain swap(vkdevice, win.hinstance(), win.hwnd());
+	render_pass renderpass(win.vk_device());
+	swap_chain swap(win.vk_device(), win.hinstance(), win.hwnd());
+
+	model sphere(win.vk_device(), "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
 	command_pool cmdpool(swap.surface());
 
@@ -41,22 +39,22 @@ int main() {
 		unique_ptr<image_view> view;
 	} depthStencil;
 
-	depthStencil.image = unique_ptr<image>(new image(width, height, vkdevice));
+	depthStencil.image = unique_ptr<image>(new image(width, height, win.vk_device()));
 	setupCmdBuffer.setImageLayout(*depthStencil.image, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	depthStencil.view = unique_ptr<image_view>(new image_view(*depthStencil.image, vkdevice.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
+	depthStencil.view = unique_ptr<image_view>(new image_view(*depthStencil.image, win.vk_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
 
 	std::vector<framebuffer> framebuffers;
 	for (uint32_t i = 0; i < swap.image_count(); i++)
 		framebuffers.push_back(framebuffer(width, height, renderpass, { swap.buffers()[i]->view, *depthStencil.view }));
 
 	setupCmdBuffer.end();
-	setupCmdBuffer.submit(vkdevice);
-	vkdevice.wait_queue_idle();
+	setupCmdBuffer.submit(win.vk_device());
+	win.vk_device().wait_queue_idle();
 
 	vector<descriptor_set_layout> descriptorSetLayouts;
-	descriptorSetLayouts.push_back(descriptor_set_layout(vkdevice));
+	descriptorSetLayouts.push_back(descriptor_set_layout(win.vk_device()));
 	pipeline_layout pipelineLayout(descriptorSetLayouts);
-	descriptor_pool descriptorPool(vkdevice);
+	descriptor_pool descriptorPool(win.vk_device());
 
 	//prepare uniform buffers
 	struct ubo_type {
@@ -69,14 +67,14 @@ int main() {
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
-	buffer<ubo_type> uboBuffer(vkdevice, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
+	buffer<ubo_type> uboBuffer(win.vk_device(), vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
 	descriptor_set descriptorSet(descriptorSetLayouts, descriptorPool, uboBuffer);
 
 	vector<shader_module> shaderModules;
-	shaderModules.push_back(shader_module(vkdevice, file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
-	shaderModules.push_back(shader_module(vkdevice, file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
+	shaderModules.push_back(shader_module(win.vk_device(), file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
+	shaderModules.push_back(shader_module(win.vk_device(), file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
 
-	pipeline_cache pipelineCache(vkdevice);
+	pipeline_cache pipelineCache(win.vk_device());
 	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, model::vertex::pipeline_info(), pipelineCache);
 
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
@@ -109,17 +107,17 @@ int main() {
 	});
 
 	win.draw().add([&](double delta) {
-		vkdevice.wait_queue_idle();
+		win.vk_device().wait_queue_idle();
 
-		semaphore presentCompleteSemaphore(vkdevice);
+		semaphore presentCompleteSemaphore(win.vk_device());
 		swap.acquireNextImage(presentCompleteSemaphore, &currentBuffer);
-		drawCmdBuffers[currentBuffer].submit(vkdevice);
+		drawCmdBuffers[currentBuffer].submit(win.vk_device());
 		swap.queuePresent(currentBuffer);
 
 		postPresentCmdBuffer.begin();
 		postPresentCmdBuffer.pipeline_barrier(swap.buffers()[currentBuffer]->image);
 		postPresentCmdBuffer.end();
-		postPresentCmdBuffer.submit(vkdevice);
+		postPresentCmdBuffer.submit(win.vk_device());
 	});
 	win.run(60);
 }

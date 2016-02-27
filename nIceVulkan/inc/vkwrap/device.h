@@ -9,7 +9,7 @@ namespace nif
 		device(const instance &instance);
 		device(const device&) = delete;
 		~device();
-		void wait_queue_idle();
+		void wait_queue_idle() const;
 
 		vk::Device handle() const;
 		const instance& parent_instance() const;

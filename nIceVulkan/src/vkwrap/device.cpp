@@ -70,7 +70,7 @@ namespace nif
 		vk::destroyDevice(handle_, nullptr);
 	}
 
-	void device::wait_queue_idle()
+	void device::wait_queue_idle() const
 	{
 		if (vk::queueWaitIdle(queue_) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");

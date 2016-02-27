@@ -9,7 +9,10 @@ namespace nif
 {
 	map<HWND, reference_wrapper<window>> windows;
 
-	window::window() {
+	window::window()
+		: instance_("nIce Framework"),
+		  device_(instance_)
+	{
 		GetModuleHandleEx(
 			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
 			(LPCTSTR)WndProc,
@@ -45,11 +48,13 @@ namespace nif
 		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
 	}
 
-	window::~window() {
+	window::~window()
+	{
 		DestroyWindow(hwnd_);
 	}
 
-	void window::run(double updateRate) {
+	void window::run(double updateRate)
+	{
 		typedef chrono::high_resolution_clock clock;
 
 		updateRate = 1 / updateRate;
@@ -82,34 +87,49 @@ namespace nif
 		}
 	}
 
-	void window::close() {
+	void window::close()
+	{
 		PostMessage(hwnd_, WM_CLOSE, 0, 0);
 	}
 
-	window::timeevent& window::update() {
+	window::timeevent& window::update()
+	{
 		return update_;
 	}
 
-	window::timeevent & window::draw() {
+	window::timeevent & window::draw()
+	{
 		return draw_;
 	}
 
-	keyboard::keyevent &window::keyhit(const keys key) {
+	keyboard::keyevent &window::keyhit(const keys key)
+	{
 		return keyboard_.keyhit(key);
 	}
 
-	mouse::buttonevent & window::buttonhit(const buttons button) {
+	mouse::buttonevent & window::buttonhit(const buttons button)
+	{
 		return mouse_.buttonhit(button);
 	}
 
-	HWND window::hwnd()
+	const HWND window::hwnd() const
 	{
 		return hwnd_;
 	}
 
-	HINSTANCE window::hinstance()
+	const HINSTANCE window::hinstance() const
 	{
 		return hinstance_;
+	}
+
+	const instance& window::vk_instance() const
+	{
+		return instance_;
+	}
+
+	const device& window::vk_device() const
+	{
+		return device_;
 	}
 
 	int window::width() const
@@ -122,7 +142,8 @@ namespace nif
 		return height_;
 	}
 
-	LRESULT CALLBACK window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	LRESULT CALLBACK window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
 		switch (message) {
 		case WM_PAINT: {
 			PAINTSTRUCT ps;
