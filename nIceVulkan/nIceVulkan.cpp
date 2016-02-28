@@ -11,8 +11,8 @@ using namespace std;
 using namespace nif;
 using namespace tinyobj;
 
-int main() {
-
+int main()
+{
 	window win;
 	render_pass renderpass(win.vk_device());
 

@@ -43,8 +43,6 @@ namespace nif
 
 	void swap_chain::setup(command_buffer &cmdBuffer, uint32_t *width, uint32_t *height)
 	{
-		vk::SwapchainKHR oldSwapchain = swapChain;
-
 		vk::SurfaceCapabilitiesKHR surfCaps;
 		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &surfCaps) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
@@ -109,19 +107,11 @@ namespace nif
 		swapchainCI.queueFamilyIndexCount(0);
 		swapchainCI.pQueueFamilyIndices(nullptr);
 		swapchainCI.presentMode(swapchainPresentMode);
-		swapchainCI.oldSwapchain(oldSwapchain);
 		swapchainCI.clipped(VK_TRUE);
 		swapchainCI.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
 
 		if (vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &swapChain) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
-
-		// If we just re-created an existing swapchain, we should destroy the old
-		// swapchain at this point.
-		// Note: destroying the swapchain also cleans up all its associated
-		// presentable images once the platform is done with them.
-		if (oldSwapchain != VK_NULL_HANDLE)
-			vk::destroySwapchainKHR(device_.handle(), oldSwapchain, nullptr);
 
 		if (vk::getSwapchainImagesKHR(device_.handle(), swapChain, &image_count_, nullptr) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");

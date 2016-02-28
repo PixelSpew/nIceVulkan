@@ -55,16 +55,8 @@ namespace nif
 			}
 		}
 
-		// Generate error if could not find both a graphics and a present queue
-		if (graphicsQueueNodeIndex == UINT32_MAX || queue_node_index_ == UINT32_MAX)
-		{
-			// todo : error message
-		}
-
-		if (graphicsQueueNodeIndex != queue_node_index_)
-		{
-			// todo : error message
-		}
+		if (graphicsQueueNodeIndex == UINT32_MAX || queue_node_index_ == UINT32_MAX || graphicsQueueNodeIndex != queue_node_index_)
+			throw runtime_error("fail");
 	}
 
 	win32_surface::~win32_surface()

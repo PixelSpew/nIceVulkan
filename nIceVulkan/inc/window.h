@@ -33,23 +33,23 @@ namespace nif
 		int width() const;
 		int height() const;
 
+	private:
 		static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-	private:
-		HWND hwnd_;
-		HINSTANCE hinstance_;
-		instance instance_;
-		device device_;
-		std::unique_ptr<swap_chain> swap_;
-		std::unique_ptr<command_pool> cmdpool_;
-		std::unique_ptr<image> depth_stencil_image_;
-		std::unique_ptr<image_view> depth_stencil_view_;
-		keyboard keyboard_;
-		mouse mouse_;
 		int width_ = 1440;
 		int height_ = 810;
 		uint32_t vk_width_ = 1440;
 		uint32_t vk_height_ = 810;
+		HINSTANCE hinstance_;
+		HWND hwnd_;
+		instance instance_;
+		device device_;
+		swap_chain swap_;
+		command_pool cmdpool_;
+		image depth_stencil_image_;
+		image_view depth_stencil_view_;
+		keyboard keyboard_;
+		mouse mouse_;
 		timeevent update_;
 		timeevent draw_;
 	};

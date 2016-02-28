@@ -9,56 +9,68 @@ namespace nif
 {
 	map<HWND, reference_wrapper<window>> windows;
 
+	namespace window_static {
+		HINSTANCE get_hinstance()
+		{
+			HINSTANCE ret;
+			GetModuleHandleEx(
+				GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+				(LPCTSTR)get_hinstance,
+				&ret);
+			return ret;
+		}
+
+		HWND make_window(HINSTANCE hinstance, WNDPROC wndProc, int width, int height)
+		{
+			GetModuleHandleEx(
+				GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+				reinterpret_cast<LPCTSTR>(wndProc),
+				&hinstance);
+
+			LPCTSTR class_name = L"nIce Framework";
+			WNDCLASSEXW wcex;
+			wcex.cbSize = sizeof(WNDCLASSEX);
+			wcex.style = CS_HREDRAW | CS_VREDRAW;
+			wcex.lpfnWndProc = wndProc;
+			wcex.cbClsExtra = 0;
+			wcex.cbWndExtra = 0;
+			wcex.hInstance = hinstance;
+			wcex.hIcon = nullptr;
+			wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+			wcex.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+			wcex.lpszMenuName = nullptr;
+			wcex.lpszClassName = class_name;
+			wcex.hIconSm = nullptr;
+			RegisterClassExW(&wcex);
+
+			return CreateWindowEx(
+				0, class_name, L"nIce Framework", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+				CW_USEDEFAULT, CW_USEDEFAULT, width, height,
+				NULL, NULL, hinstance, NULL);
+		}
+	}
+
+#define S window_static
+
 	window::window()
-		: instance_("nIce Framework"),
-		  device_(instance_)
+		: hinstance_(S::get_hinstance()),
+		  hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
+		  instance_("nIce Framework"),
+		  device_(instance_),
+		  swap_(device_, hinstance_, hwnd_),
+		  cmdpool_(swap_.surface()),
+		  depth_stencil_image_(width_, height_, device_),	// todo: use vk_width_ and vk_height_
+		  depth_stencil_view_(depth_stencil_image_, device_.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
 	{
-		GetModuleHandleEx(
-			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-			(LPCTSTR)WndProc,
-			&hinstance_);
-
-		LPCTSTR class_name = L"nIce Framework";
-		WNDCLASSEXW wcex;
-		wcex.cbSize = sizeof(WNDCLASSEX);
-		wcex.style = CS_HREDRAW | CS_VREDRAW;
-		wcex.lpfnWndProc = WndProc;
-		wcex.cbClsExtra = 0;
-		wcex.cbWndExtra = 0;
-		wcex.hInstance = hinstance_;
-		wcex.hIcon = nullptr;
-		wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-		wcex.lpszMenuName = nullptr;
-		wcex.lpszClassName = class_name;
-		wcex.hIconSm = nullptr;
-		RegisterClassExW(&wcex);
-
-		WNDCLASS wc;
-		wc.lpfnWndProc = WndProc;
-		wc.hInstance = hinstance_;
-		wc.lpszClassName = class_name;
-		hwnd_ = CreateWindowEx(
-			0, class_name, L"nIce Framework", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-			CW_USEDEFAULT, CW_USEDEFAULT, width_, height_,
-			NULL, NULL, hinstance_, NULL);
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);
 
 		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
 
-		swap_ = unique_ptr<swap_chain>(new swap_chain(device_, hinstance_, hwnd_));
-
-		cmdpool_ = unique_ptr<command_pool>(new command_pool(swap_->surface()));
-		command_buffer setupCmdBuffer(*cmdpool_);
+		command_buffer setupCmdBuffer(cmdpool_);
 		setupCmdBuffer.begin();
-		swap_->setup(setupCmdBuffer, &vk_width_, &vk_height_);
-
-		depth_stencil_image_ = unique_ptr<image>(new image(width_, height_, device_));
-		depth_stencil_view_ = unique_ptr<image_view>(new image_view(*depth_stencil_image_, device_.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil));
-
-		setupCmdBuffer.setImageLayout(*depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
+		swap_.setup(setupCmdBuffer, &vk_width_, &vk_height_);
+		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		setupCmdBuffer.end();
 		setupCmdBuffer.submit(device_);
 		device_.wait_queue_idle();
@@ -150,12 +162,12 @@ namespace nif
 
 	const command_pool& window::vk_command_pool() const
 	{
-		return *cmdpool_;
+		return cmdpool_;
 	}
 
-	const image_view & window::depth_stencil_view() const
+	const image_view& window::depth_stencil_view() const
 	{
-		return *depth_stencil_view_;
+		return depth_stencil_view_;
 	}
 
 	uint32_t window::vk_width() const
@@ -170,7 +182,7 @@ namespace nif
 
 	const swap_chain& window::vk_swap_chain() const
 	{
-		return *swap_;
+		return swap_;
 	}
 
 	int window::width() const
@@ -186,54 +198,63 @@ namespace nif
 	LRESULT CALLBACK window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message) {
-		case WM_PAINT: {
+		case WM_PAINT:
+		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);
 			// TODO: Add any drawing code that uses hdc here...
 			EndPaint(hWnd, &ps);
 		} break;
-		case WM_KEYDOWN: {
+		case WM_KEYDOWN:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().keyboard_.set_key(wParam, lParam, true);
 		} break;
-		case WM_KEYUP: {
+		case WM_KEYUP:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().keyboard_.set_key(wParam, lParam, false);
 		}
 		break;
-		case WM_LBUTTONDOWN: {
+		case WM_LBUTTONDOWN:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, true);
 		}
 		break;
-		case WM_LBUTTONUP: {
+		case WM_LBUTTONUP:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, false);
 		}
 		break;
-		case WM_RBUTTONDOWN: {
+		case WM_RBUTTONDOWN:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, true);
 		}
 		break;
-		case WM_RBUTTONUP: {
+		case WM_RBUTTONUP:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, false);
 		}
 		break;
-		case WM_MBUTTONDOWN: {
+		case WM_MBUTTONDOWN:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, true);
 		}
 		break;
-		case WM_MBUTTONUP: {
+		case WM_MBUTTONUP:
+		{
 			auto win = windows.find(hWnd);
 			if (win != windows.end())
 				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, false);
