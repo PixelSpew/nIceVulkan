@@ -57,6 +57,19 @@ namespace nif
 
 		if (graphicsQueueNodeIndex == UINT32_MAX || queue_node_index_ == UINT32_MAX || graphicsQueueNodeIndex != queue_node_index_)
 			throw runtime_error("fail");
+
+		/////////
+
+		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(device.physical_handle(), handle_, &capabilities_) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
+
+		uint32_t presentModeCount;
+		if (vk::getPhysicalDeviceSurfacePresentModesKHR(device.physical_handle(), handle_, &presentModeCount, nullptr) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
+
+		present_modes_.resize(presentModeCount);
+		if (vk::getPhysicalDeviceSurfacePresentModesKHR(device.physical_handle(), handle_, &presentModeCount, present_modes_.data()) != vk::Result::eVkSuccess)
+			throw runtime_error("fail");
 	}
 
 	win32_surface::~win32_surface()
@@ -77,5 +90,15 @@ namespace nif
 	uint32_t win32_surface::queue_node_index() const
 	{
 		return queue_node_index_;
+	}
+
+	const vk::SurfaceCapabilitiesKHR& win32_surface::capabilities() const
+	{
+		return capabilities_;
+	}
+
+	const vector<vk::PresentModeKHR>& win32_surface::present_modes() const
+	{
+		return present_modes_;
 	}
 }

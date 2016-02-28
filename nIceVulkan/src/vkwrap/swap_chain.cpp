@@ -43,18 +43,7 @@ namespace nif
 
 	void swap_chain::setup(command_buffer &cmdBuffer, uint32_t *width, uint32_t *height)
 	{
-		vk::SurfaceCapabilitiesKHR surfCaps;
-		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &surfCaps) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
-		uint32_t presentModeCount;
-		if (vk::getPhysicalDeviceSurfacePresentModesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &presentModeCount, nullptr) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
-		vector<vk::PresentModeKHR> presentModes(presentModeCount);
-		if (vk::getPhysicalDeviceSurfacePresentModesKHR(cmdBuffer.parent_device().physical_handle(), surface_.handle(), &presentModeCount, presentModes.data()) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
+		const vk::SurfaceCapabilitiesKHR& surfCaps = surface_.capabilities();
 		vk::Extent2D swapchainExtent;
 		if (surfCaps.currentExtent().width() == -1)
 		{
@@ -69,14 +58,15 @@ namespace nif
 		}
 
 		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eVkPresentModeFifoKhr;
-		for (size_t i = 0; i < presentModeCount; i++)
+		for (size_t i = 0; i < surface_.present_modes().size(); i++)
 		{
-			if (presentModes[i] == vk::PresentModeKHR::eVkPresentModeMailboxKhr)
+			if (surface_.present_modes()[i] == vk::PresentModeKHR::eVkPresentModeMailboxKhr)
 			{
 				swapchainPresentMode = vk::PresentModeKHR::eVkPresentModeMailboxKhr;
 				break;
 			}
-			if (swapchainPresentMode != vk::PresentModeKHR::eVkPresentModeMailboxKhr && presentModes[i] == vk::PresentModeKHR::eVkPresentModeImmediateKhr)
+
+			if (swapchainPresentMode != vk::PresentModeKHR::eVkPresentModeMailboxKhr && surface_.present_modes()[i] == vk::PresentModeKHR::eVkPresentModeImmediateKhr)
 			{
 				swapchainPresentMode = vk::PresentModeKHR::eVkPresentModeImmediateKhr;
 			}
