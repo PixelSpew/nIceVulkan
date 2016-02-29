@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/pipeline_layout.h"
+#include "util/setops.h"
 
 using namespace std;
 
@@ -8,13 +9,12 @@ namespace nif
 	pipeline_layout::pipeline_layout(const vector<descriptor_set_layout> &descSetLayouts)
 		: device_(descSetLayouts[0].parent_device())
 	{
+		auto handles = set::from(descSetLayouts)
+			.select([](const descriptor_set_layout &x) { return x.handle(); })
+			.to_vector();
+
 		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo;
 		pPipelineLayoutCreateInfo.setLayoutCount(static_cast<uint32_t>(descSetLayouts.size()));
-
-		vector<vk::DescriptorSetLayout> handles;
-		for (auto &layout : descSetLayouts)
-			handles.push_back(layout.handle());
-
 		pPipelineLayoutCreateInfo.pSetLayouts(handles.data());
 
 		if (vk::createPipelineLayout(device_.handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)

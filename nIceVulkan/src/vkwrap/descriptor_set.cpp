@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/descriptor_set.h"
+#include "util/setops.h"
 
 #define DESCRIPTOR_SET_COUNT 1
 
@@ -10,9 +11,9 @@ namespace nif
 	descriptor_set::descriptor_set(const std::vector<descriptor_set_layout> &setLayouts, const descriptor_pool &pool, const ibuffer &buffer)
 		: device_(pool.parent_device()), pool_(pool)
 	{
-		vector<vk::DescriptorSetLayout> handles;
-		for (auto &layout : setLayouts)
-			handles.push_back(layout.handle());
+		vector<vk::DescriptorSetLayout> handles = set::from(setLayouts)
+			.select([](const descriptor_set_layout &x) { return x.handle(); })
+			.to_vector();
 
 		vk::DescriptorSetAllocateInfo dsAllocInfo;
 		dsAllocInfo.descriptorPool(pool.handle());

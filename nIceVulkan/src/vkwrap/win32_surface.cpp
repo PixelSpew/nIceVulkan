@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/win32_surface.h"
+#include "util/setops.h"
 
 using namespace std;
 
@@ -27,35 +28,23 @@ namespace nif
 			if (vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
 				throw runtime_error("fail");
 
-		uint32_t graphicsQueueNodeIndex = UINT32_MAX;
+		set::from(queueProps)
+			.first_index([&](const vk::QueueFamilyProperties &x, uint32_t i) {
+				if (vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
+					throw runtime_error("fail");
+				return x.queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent[i];
+			});
+
 		for (uint32_t i = 0; i < queueCount; i++)
 		{
-			if ((queueProps[i].queueFlags() & vk::QueueFlagBits::eGraphics) != 0)
+			if (queueProps[i].queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent[i])
 			{
-				if (graphicsQueueNodeIndex == UINT32_MAX)
-					graphicsQueueNodeIndex = i;
-
-				if (supportsPresent[i])
-				{
-					graphicsQueueNodeIndex = i;
-					queue_node_index_ = i;
-					break;
-				}
+				queue_node_index_ = i;
+				break;
 			}
 		}
+
 		if (queue_node_index_ == UINT32_MAX)
-		{
-			for (uint32_t i = 0; i < queueCount; ++i)
-			{
-				if (supportsPresent[i])
-				{
-					queue_node_index_ = i;
-					break;
-				}
-			}
-		}
-
-		if (graphicsQueueNodeIndex == UINT32_MAX || queue_node_index_ == UINT32_MAX || graphicsQueueNodeIndex != queue_node_index_)
 			throw runtime_error("fail");
 
 		/////////

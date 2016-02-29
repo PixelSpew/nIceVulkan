@@ -1,7 +1,6 @@
 #pragma once
 #include "util/dispatcher.h"
 #include <Windows.h>
-#include <vector>
 #include <queue>
 
 namespace nif

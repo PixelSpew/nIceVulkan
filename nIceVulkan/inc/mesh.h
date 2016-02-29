@@ -1,6 +1,5 @@
 #pragma once
 #include "vkwrap/buffer.h"
-#include <vector>
 
 namespace nif {
 	template <typename T>

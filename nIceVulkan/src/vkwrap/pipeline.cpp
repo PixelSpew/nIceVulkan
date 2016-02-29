@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/pipeline.h"
+#include "util/setops.h"
 
 using namespace std;
 
@@ -13,14 +14,6 @@ namespace nif
 		const pipeline_cache &cache)
 		: device_(pass.parent_device())
 	{
-		vector<vk::PipelineShaderStageCreateInfo> shaderStages(shaderModules.size());
-		for (size_t i = 0; i < shaderStages.size(); i++)
-		{
-			shaderStages[i].stage(shaderModules[i].stage());
-			shaderStages[i].module(shaderModules[i].handle());
-			shaderStages[i].pName("main");
-		}
-
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;
 		inputAssemblyState.topology(vk::PrimitiveTopology::eTriangleList);
 
@@ -63,6 +56,16 @@ namespace nif
 		vk::PipelineDynamicStateCreateInfo dynamicState;
 		dynamicState.dynamicStateCount(static_cast<uint32_t>(dynamicStateEnables.size()));
 		dynamicState.pDynamicStates(dynamicStateEnables.data());
+
+		auto shaderStages = set::from(shaderModules)
+			.select([](const shader_module &x) {
+				vk::PipelineShaderStageCreateInfo ret;
+				ret.stage(x.stage());
+				ret.module(x.handle());
+				ret.pName("main");
+				return ret;
+			})
+			.to_vector();
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo;
 		pipelineCreateInfo.layout(layout.handle());

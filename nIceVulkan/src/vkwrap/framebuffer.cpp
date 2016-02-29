@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/framebuffer.h"
+#include "util/setops.h"
 
 using namespace std;
 
@@ -8,9 +9,9 @@ namespace nif
 	framebuffer::framebuffer(const uint32_t width, const uint32_t height, const render_pass &pass, const std::initializer_list<std::reference_wrapper<const image_view>> views)
 		: device_(pass.parent_device())
 	{
-		vector<vk::ImageView> handles;
-		for (auto &view : views)
-			handles.push_back(view.get().handle());
+		vector<vk::ImageView> handles = set::from(views)
+			.select([](const reference_wrapper<const image_view> &x) { return x.get().handle(); })
+			.to_vector();
 
 		vk::FramebufferCreateInfo frameBufferCreateInfo;
 		frameBufferCreateInfo.renderPass(pass.handle());
