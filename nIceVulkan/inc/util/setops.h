@@ -71,18 +71,106 @@ namespace set
 	// ************************************************************************
 #pragma region iterators
 
-	template<typename InternalIter, typename Func>
-	class where_iterator
+	template<
+		typename Child,
+		typename InternalIter,
+		typename Val = typename std::iterator_traits<InternalIter>::value_type,
+		typename Ref = typename std::iterator_traits<InternalIter>::reference,
+		typename Point = typename std::iterator_traits<InternalIter>::pointer,
+		typename Diff = typename std::iterator_traits<InternalIter>::difference_type,
+		typename Deref = Ref>
+	class base_iterator
 	{
 	public:
-		using difference_type = typename std::iterator_traits<InternalIter>::difference_type;
-		using value_type = typename std::iterator_traits<InternalIter>::value_type;
-		using reference = typename std::iterator_traits<InternalIter>::reference;
-		using pointer = typename std::iterator_traits<InternalIter>::pointer;
-		typedef std::input_iterator_tag iterator_category;
+		using difference_type = Diff;
+		using value_type = Val;
+		using reference = Ref;
+		using pointer = Point;
+		typedef std::bidirectional_iterator_tag iterator_category;
 
+		base_iterator()
+		{
+		}
+
+		base_iterator(InternalIter iter) :
+			iter_(iter)
+		{
+		}
+
+		template<typename T = Deref, ENABLE_IF((std::is_same<T, Ref>::value))>
+		T operator*() const
+		{
+			return *iter_;
+		}
+
+		template<typename T = Deref, ENABLE_IF((std::is_same<T, Val>::value))>
+		T operator*() const;
+
+		virtual Child& operator++()
+		{
+			++iter_;
+			return static_cast<Child&>(*this);
+		}
+
+		virtual Child operator++(int)
+		{
+			Child tmp(static_cast<Child&>(*this));
+			operator++();
+			return tmp;
+		}
+
+		virtual Child& operator--()
+		{
+			--iter_;
+			return static_cast<Child&>(*this);
+		}
+
+		virtual Child operator--(int)
+		{
+			Child tmp(static_cast<Child&>(*this));
+			operator--();
+			return tmp;
+		}
+
+		pointer operator->() const
+		{
+			static_assert(std::is_same<Deref, Val>::value, "Cannot make a pointer to the result of a transformative iterator.");
+			return &operator*();
+		}
+
+		bool operator==(const Child &rhs) const
+		{
+			return iter_ == rhs.iter_;
+		}
+
+		bool operator!=(const Child &rhs) const
+		{
+			return !operator==(rhs);
+		}
+
+	protected:
+		InternalIter iter_;
+	};
+
+	template<typename Child, typename InternalIter, typename Ret, typename Diff = typename std::iterator_traits<InternalIter>::difference_type>
+	class transform_iterator :
+		public base_iterator<Child, InternalIter, Ret, const Ret&, const Ret*, Diff, Ret>
+	{
+	public:
+		transform_iterator(InternalIter iter) :
+			base_iterator(iter)
+		{
+		}
+	};
+
+	template<typename InternalIter, typename Func>
+	class where_iterator : public base_iterator<
+		where_iterator<InternalIter, Func>,
+		InternalIter>
+	{
+	public:
 		where_iterator(const InternalIter &iter, const InternalIter &end, const Func &filter) :
-			iter_(iter),
+			base_iterator(iter),
 			end_(end),
 			filter_(filter)
 		{
@@ -92,19 +180,7 @@ namespace set
 			begin_ = iter_;
 		}
 
-		where_iterator& operator=(const where_iterator& rhs)
-		{
-			iter_ = rhs.iter_;
-			end_ = rhs.end_;
-			filter_ = rhs.filter_;
-		}
-
-		reference operator*() const
-		{
-			return *iter_;
-		}
-
-		where_iterator& operator++()
+		where_iterator& operator++() override
 		{
 			do {
 				++iter_;
@@ -112,14 +188,14 @@ namespace set
 			return *this;
 		}
 
-		where_iterator operator++(int)
+		virtual where_iterator operator++(int) override
 		{
 			where_iterator tmp(*this);
 			operator++();
 			return tmp;
 		}
 
-		where_iterator& operator--()
+		where_iterator& operator--() override
 		{
 			do {
 				--iter_;
@@ -127,58 +203,30 @@ namespace set
 			return *this;
 		}
 
-		where_iterator operator--(int)
+		where_iterator operator--(int) override
 		{
 			where_iterator tmp(*this);
 			operator--();
 			return tmp;
 		}
 
-		pointer operator->() const
-		{
-			return &operator*();
-		}
-
-		inline bool operator==(const where_iterator &rhs) const
-		{
-			return iter_ == rhs.iter_;
-		}
-
-		inline bool operator!=(const where_iterator &rhs) const
-		{
-			return !operator==(rhs);
-		}
-
-		InternalIter iter_;
 		InternalIter begin_;
 		InternalIter end_;
 		Func filter_;
 	};
 
 	template<typename InternalIter, typename Func>
-	class select_iterator
+	class select_iterator : public transform_iterator<
+		select_iterator<InternalIter, Func>,
+		InternalIter,
+		typename function_traits<Func>::result_type>
 	{
-		using ret = typename function_traits<Func>::result_type;
-
 	public:
-		using difference_type = typename std::iterator_traits<InternalIter>::difference_type;
-		using value_type = ret;
-		using reference = const ret&;
-		using pointer = const ret*;
-		using iterator_category = std::input_iterator_tag;
-
 		select_iterator(const InternalIter &iter, const InternalIter &end, const Func &transform) :
-			iter_(iter),
+			transform_iterator(iter),
 			end_(end),
 			transform_(transform)
 		{
-		}
-
-		select_iterator& operator=(const select_iterator& rhs)
-		{
-			iter_ = rhs.iter_;
-			end_ = rhs.end_;
-			filter_ = rhs.filter_;
 		}
 
 		value_type operator*() const
@@ -190,63 +238,16 @@ namespace set
 			}
 		}
 
-		select_iterator& operator++()
-		{
-			++iter_;
-			return *this;
-		}
-
-		select_iterator operator++(int)
-		{
-			select_iterator tmp(*this);
-			operator++();
-			return tmp;
-		}
-
-		select_iterator& operator--()
-		{
-			--iter_;
-			return *this;
-		}
-
-		select_iterator operator--(int)
-		{
-			select_iterator tmp(*this);
-			operator--();
-			return tmp;
-		}
-
-		pointer operator->() const
-		{
-			return &operator*();
-		}
-
-		inline bool operator==(const select_iterator &rhs) const
-		{
-			return iter_ == rhs.iter_;
-		}
-
-		inline bool operator!=(const select_iterator &rhs) const
-		{
-			return !operator==(rhs);
-		}
-
-		InternalIter iter_;
 		InternalIter end_;
 		Func transform_;
 	};
 
 	template<typename InternalIter, typename KeyFunc, typename CompFunc>
-	class order_by_iterator
+	class order_by_iterator : public base_iterator<
+		order_by_iterator<InternalIter, KeyFunc, CompFunc>,
+		typename std::vector<std::reference_wrapper<const typename std::iterator_traits<InternalIter>::value_type>>::const_iterator,
+		const typename std::iterator_traits<InternalIter>::value_type>
 	{
-	public:
-		using difference_type = typename std::iterator_traits<InternalIter>::difference_type;
-		using value_type = const typename std::iterator_traits<InternalIter>::value_type;
-		using reference = typename std::iterator_traits<InternalIter>::reference;
-		using pointer = typename std::iterator_traits<InternalIter>::pointer;
-		typedef std::input_iterator_tag iterator_category;
-
-	private:
 		using storage_type = std::vector<std::reference_wrapper<value_type>>;
 
 	public:
@@ -271,52 +272,6 @@ namespace set
 			order_by_iterator ret = *this;
 			ret.iter_ = sorted_->end();
 			return ret;
-		}
-
-		reference operator*() const
-		{
-			return (*iter_).get();
-		}
-
-		order_by_iterator& operator++()
-		{
-			++iter_;
-			return *this;
-		}
-
-		order_by_iterator operator++(int)
-		{
-			order_by_iterator tmp(*this);
-			operator++();
-			return tmp;
-		}
-
-		order_by_iterator& operator--()
-		{
-			--iter_;
-			return *this;
-		}
-
-		order_by_iterator operator--(int)
-		{
-			order_by_iterator tmp(*this);
-			operator--();
-			return tmp;
-		}
-
-		pointer operator->() const
-		{
-			return &operator*();
-		}
-
-		inline bool operator==(const order_by_iterator &rhs) const
-		{
-			return iter_ == rhs.iter_;
-		}
-
-		inline bool operator!=(const order_by_iterator &rhs) const
-		{
-			return !operator==(rhs);
 		}
 
 	private:
@@ -425,7 +380,6 @@ namespace set
 			(*sorted_)[b] = tmp;
 		}
 
-		typename storage_type::const_iterator iter_;
 		std::shared_ptr<storage_type> sorted_;
 		InternalIter begin_;
 		InternalIter end_;
