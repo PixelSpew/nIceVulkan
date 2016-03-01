@@ -25,10 +25,13 @@ SOFTWARE.
 #pragma once
 #include <functional>
 #include <vector>
+#include <memory>
 
 namespace set
 {
-
+	// ************************************************************************
+	//		FUNCTION TRAITS
+	// ************************************************************************
 #pragma region function traits
 
 	template <typename T>
@@ -52,6 +55,9 @@ namespace set
 
 #pragma endregion
 
+	// ************************************************************************
+	//		MACROS
+	// ************************************************************************
 #pragma region macros
 
 #define PARAM_COUNT(Func) function_traits<Func>::arity
@@ -60,6 +66,9 @@ namespace set
 
 #pragma endregion
 
+	// ************************************************************************
+	//		ITERATORS
+	// ************************************************************************
 #pragma region iterators
 
 	template<typename InternalIter, typename Func>
@@ -80,14 +89,17 @@ namespace set
 			while (iter_ != end_ && !filter_(*iter_)) {
 				++iter_;
 			}
+			begin_ = iter_;
 		}
 
 		where_iterator& operator=(const where_iterator& rhs)
 		{
 			iter_ = rhs.iter_;
+			end_ = rhs.end_;
+			filter_ = rhs.filter_;
 		}
 
-		virtual reference operator*() const
+		reference operator*() const
 		{
 			return *iter_;
 		}
@@ -98,6 +110,28 @@ namespace set
 				++iter_;
 			} while (iter_ != end_ && !filter_(*iter_));
 			return *this;
+		}
+
+		where_iterator operator++(int)
+		{
+			where_iterator tmp(*this);
+			operator++();
+			return tmp;
+		}
+
+		where_iterator& operator--()
+		{
+			do {
+				--iter_;
+			} while (iter_ != begin_ && !filter_(*iter_));
+			return *this;
+		}
+
+		where_iterator operator--(int)
+		{
+			where_iterator tmp(*this);
+			operator--();
+			return tmp;
 		}
 
 		pointer operator->() const
@@ -116,6 +150,7 @@ namespace set
 		}
 
 		InternalIter iter_;
+		InternalIter begin_;
 		InternalIter end_;
 		Func filter_;
 	};
@@ -142,6 +177,8 @@ namespace set
 		select_iterator& operator=(const select_iterator& rhs)
 		{
 			iter_ = rhs.iter_;
+			end_ = rhs.end_;
+			filter_ = rhs.filter_;
 		}
 
 		value_type operator*() const
@@ -153,7 +190,7 @@ namespace set
 			}
 		}
 
-		virtual select_iterator& operator++()
+		select_iterator& operator++()
 		{
 			++iter_;
 			return *this;
@@ -161,9 +198,22 @@ namespace set
 
 		select_iterator operator++(int)
 		{
-			select_iterator ret(*this);
+			select_iterator tmp(*this);
 			operator++();
-			return ret;
+			return tmp;
+		}
+
+		select_iterator& operator--()
+		{
+			--iter_;
+			return *this;
+		}
+
+		select_iterator operator--(int)
+		{
+			select_iterator tmp(*this);
+			operator--();
+			return tmp;
 		}
 
 		pointer operator->() const
@@ -186,8 +236,206 @@ namespace set
 		Func transform_;
 	};
 
+	template<typename InternalIter, typename KeyFunc, typename CompFunc>
+	class order_by_iterator
+	{
+	public:
+		using difference_type = typename std::iterator_traits<InternalIter>::difference_type;
+		using value_type = const typename std::iterator_traits<InternalIter>::value_type;
+		using reference = typename std::iterator_traits<InternalIter>::reference;
+		using pointer = typename std::iterator_traits<InternalIter>::pointer;
+		typedef std::input_iterator_tag iterator_category;
+
+	private:
+		using storage_type = std::vector<std::reference_wrapper<value_type>>;
+
+	public:
+		order_by_iterator(const InternalIter &iter, const InternalIter &end, const KeyFunc &keySelector, const CompFunc &comparison) :
+			begin_(iter),
+			end_(end)
+		{
+			sorted_ = std::shared_ptr<storage_type>(new storage_type());
+
+			for (InternalIter copyIter = iter; copyIter != end; copyIter++) {
+				sorted_->push_back(*copyIter);
+			}
+
+			if (sorted_->size() > 0)
+				dual_pivot_quicksort(0, sorted_->size() - 1, sorted_->size() - 1, keySelector, comparison);
+
+			iter_ = sorted_->begin();
+		}
+
+		order_by_iterator end()
+		{
+			order_by_iterator ret = *this;
+			ret.iter_ = sorted_->end();
+			return ret;
+		}
+
+		reference operator*() const
+		{
+			return (*iter_).get();
+		}
+
+		order_by_iterator& operator++()
+		{
+			++iter_;
+			return *this;
+		}
+
+		order_by_iterator operator++(int)
+		{
+			order_by_iterator tmp(*this);
+			operator++();
+			return tmp;
+		}
+
+		order_by_iterator& operator--()
+		{
+			--iter_;
+			return *this;
+		}
+
+		order_by_iterator operator--(int)
+		{
+			order_by_iterator tmp(*this);
+			operator--();
+			return tmp;
+		}
+
+		pointer operator->() const
+		{
+			return &operator*();
+		}
+
+		inline bool operator==(const order_by_iterator &rhs) const
+		{
+			return iter_ == rhs.iter_;
+		}
+
+		inline bool operator!=(const order_by_iterator &rhs) const
+		{
+			return !operator==(rhs);
+		}
+
+	private:
+
+#define LESS_THAN(A, B) (comparison(keySelector(A), keySelector(B)) < 0)
+#define GREATER_THAN(A, B) (comparison(keySelector(A), keySelector(B)) > 0)
+#define EQUAL_TO(A, B) (comparison(keySelector(A), keySelector(B)) == 0)
+
+		void dual_pivot_quicksort(size_t left, size_t right, size_t div, const KeyFunc &keySelector, const CompFunc &comparison)
+		{
+			size_t len = right - left;
+
+			if (len < 27) { // insertion sort for tiny array
+				for (size_t i = left + 1; i <= right; i++) {
+					for (size_t j = i; j > left && LESS_THAN((*sorted_)[j].get(), (*sorted_)[j - 1].get()); j--) {
+						swap(j, j - 1);
+					}
+				}
+				return;
+			}
+
+			size_t third = len / div;
+
+			// "medians"
+			size_t m1 = left + third;
+			size_t m2 = right - third;
+
+			if (m1 <= left)
+				m1 = left + 1;
+			if (m2 >= right)
+				m2 = right - 1;
+
+			if (LESS_THAN((*sorted_)[m1].get(), (*sorted_)[m2].get())) {
+				swap(m1, left);
+				swap(m2, right);
+			} else {
+				swap(m1, right);
+				swap(m2, left);
+			}
+
+			// pivots
+			value_type pivot1 = (*sorted_)[left].get();
+			value_type pivot2 = (*sorted_)[right].get();
+
+			// pointers
+			size_t less = left + 1;
+			size_t great = right - 1;
+
+			// sorting
+			for (size_t k = less; k <= great; k++) {
+				if (LESS_THAN((*sorted_)[k].get(), pivot1)) {
+					swap(k, less++);
+				} else if (GREATER_THAN((*sorted_)[k].get(), pivot2)) {
+					while (k < great && GREATER_THAN((*sorted_)[great].get(), pivot2)) {
+						great--;
+					}
+					swap(k, great--);
+
+					if (LESS_THAN((*sorted_)[k].get(), pivot1)) {
+						swap(k, less++);
+					}
+				}
+			}
+
+			// swaps
+			size_t dist = great - less;
+
+			if (dist < 13) {
+				div++;
+			}
+			swap(less - 1, left);
+			swap(great + 1, right);
+
+			// subarrays
+			dual_pivot_quicksort(left, less - 2, div, keySelector, comparison);
+			dual_pivot_quicksort(great + 2, right, div, keySelector, comparison);
+
+			// equal elements
+			if (dist > len - 13 && !EQUAL_TO(pivot1, pivot2)) {
+				for (size_t k = less; k <= great; k++) {
+					if (EQUAL_TO((*sorted_)[k].get(), pivot1)) {
+						swap(k, less++);
+					} else if (EQUAL_TO((*sorted_)[k].get(), pivot2)) {
+						swap(k, great--);
+
+						if (EQUAL_TO((*sorted_)[k].get(), pivot1)) {
+							swap(k, less++);
+						}
+					}
+				}
+			}
+
+			// subarray
+			if (LESS_THAN(pivot1, pivot2))
+				dual_pivot_quicksort(less, great, div, keySelector, comparison);
+		}
+
+#undef EQUAL_TO
+#undef GREATER_THAN
+#undef LESS_THAN
+
+		void swap(size_t a, size_t b)
+		{
+			std::reference_wrapper<value_type> tmp = (*sorted_)[a];
+			(*sorted_)[a] = (*sorted_)[b];
+			(*sorted_)[b] = tmp;
+		}
+
+		typename storage_type::const_iterator iter_;
+		std::shared_ptr<storage_type> sorted_;
+		InternalIter begin_;
+		InternalIter end_;
+	};
+
 #pragma endregion
 
+	// ************************************************************************
+	//		ENUMERABLE
+	// ************************************************************************
 #pragma region enumerable
 
 	template<typename T, typename Iterator>
@@ -226,6 +474,11 @@ namespace set
 				size_);
 		}
 
+		reference first()
+		{
+			return *begin_;
+		}
+
 		template<typename Func>
 		reference first(const Func &filter)
 		{
@@ -235,6 +488,11 @@ namespace set
 			throw runtime_error("Could not find element");
 		}
 
+		reference last()
+		{
+			Iterator last = end_;
+			return *(--last);
+		}
 
 		/// <summary>
 		/// Returns -1 if no element is found
@@ -263,14 +521,41 @@ namespace set
 			return -1;
 		}
 
+		template<typename KeyFunc>
+		auto order_by(const KeyFunc &keySelector)
+		{
+			using key_type = function_traits<KeyFunc>::result_type;
+			static const auto comparison = [](const key_type &a, const key_type &b) {
+				if (a > b) {
+					return 1;
+				} else if (a < b) {
+					return -1;
+				} else {
+					return 0;
+				}
+			};
+
+			order_by_iterator<Iterator, KeyFunc, decltype(comparison)> begin(begin_, end_, keySelector, comparison);
+			order_by_iterator<Iterator, KeyFunc, decltype(comparison)> end = begin.end();
+			return enumerable<value_type, order_by_iterator<Iterator, KeyFunc, decltype(comparison)>>(begin, end, size_);
+		}
+
+		template<typename KeyFunc, typename CompFunc>
+		auto order_by(const KeyFunc &keySelector, const CompFunc &comparison)
+		{
+			order_by_iterator<Iterator, KeyFunc, CompFunc> begin(begin_, end_, keySelector, comparison);
+			order_by_iterator<Iterator, KeyFunc, CompFunc> end = begin.end();
+			return enumerable<value_type, order_by_iterator<Iterator, KeyFunc, CompFunc>>(begin, end, size_);
+		}
+
 		std::vector<T> to_vector() const
 		{
 			std::vector<T> ret;
 			if (size_ != SIZE_MAX) {
 				ret.reserve(size_);
 			}
-			for (const T& item : *this) {
-				ret.push_back(item);
+			for (Iterator iter = begin_; iter != end_; iter++) {
+				ret.push_back(*iter);
 			}
 			return ret;
 		}
@@ -293,6 +578,9 @@ namespace set
 
 #pragma endregion
 
+	// ************************************************************************
+	//		BUILDERS
+	// ************************************************************************
 #pragma region builders
 
 	template<typename T>

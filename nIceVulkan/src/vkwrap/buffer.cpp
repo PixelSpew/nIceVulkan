@@ -28,8 +28,8 @@ namespace nif
 			vk::destroyBuffer(device_.handle(), handle_, nullptr);
 	}
 
-	ibuffer::ibuffer(ibuffer &&old)
-		: device_(old.device_),
+	ibuffer::ibuffer(ibuffer &&old) :
+		device_(old.device_),
 		handle_(old.handle_),
 		gpumem_(move(old.gpumem_)),
 		size_(old.size_)

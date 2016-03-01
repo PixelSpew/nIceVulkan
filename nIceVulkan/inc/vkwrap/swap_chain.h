@@ -31,9 +31,9 @@ namespace nif
 
 	private:
 		win32_surface surface_;
-		vk::Format colorFormat;
-		vk::ColorSpaceKHR colorSpace;
-		vk::SwapchainKHR swapChain = VK_NULL_HANDLE;
+		vk::Format color_format_;
+		vk::ColorSpaceKHR color_space_;
+		vk::SwapchainKHR handle_ = VK_NULL_HANDLE;
 
 		uint32_t image_count_;
 		std::vector<buffer> buffers_;
