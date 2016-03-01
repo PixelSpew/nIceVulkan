@@ -98,17 +98,15 @@ namespace nif
 		if (vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, swapchainImages.data()) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 
-		buffers_ = set::from(swapchainImages)
-			.select([&](const vk::Image image) {
-				buffer ret(device_, image, color_format_);
-				cmdBuffer.setImageLayout(
-					ret.image,
-					vk::ImageAspectFlagBits::eColor,
-					vk::ImageLayout::eUndefined,
-					static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
-				return ret;
-			})
-			.to_vector();
+		buffers_.reserve(image_count_);
+		for (uint32_t i = 0; i < image_count_; i++) {
+			buffers_.push_back(buffer(device_, swapchainImages[i], color_format_));
+			cmdBuffer.setImageLayout(
+				buffers_[i].image,
+				vk::ImageAspectFlagBits::eColor,
+				vk::ImageLayout::eUndefined,
+				static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+		}
 	}
 
 	uint32_t swap_chain::acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const
