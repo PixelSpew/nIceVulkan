@@ -60,8 +60,15 @@ namespace set
 	// ************************************************************************
 #pragma region macros
 
-#define PARAM_COUNT(Func) function_traits<Func>::arity
-#define ARG_TYPE(Func, Index) function_traits<Func>::arg<Index>::type
+#define FUNC_PARAM_COUNT(Func) function_traits<Func>::arity
+#define FUNC_ARG_TYPE(Func, Index) function_traits<Func>::arg<Index>::type
+#define FUNC_RET(Func) function_traits<Func>::result_type
+
+#define ITER_VAL(Iter) typename std::iterator_traits<Iter>::value_type
+#define ITER_REF(Iter) typename std::iterator_traits<Iter>::reference
+#define ITER_POINT(Iter) typename std::iterator_traits<Iter>::pointer
+#define ITER_DIFF(Iter) typename std::iterator_traits<Iter>::difference_type
+
 #define ENABLE_IF(Cond) typename std::enable_if<Cond, int>::type = 0
 
 #pragma endregion
@@ -74,10 +81,10 @@ namespace set
 	template<
 		typename Child,
 		typename InternalIter,
-		typename Val = typename std::iterator_traits<InternalIter>::value_type,
-		typename Ref = typename std::iterator_traits<InternalIter>::reference,
-		typename Point = typename std::iterator_traits<InternalIter>::pointer,
-		typename Diff = typename std::iterator_traits<InternalIter>::difference_type,
+		typename Val = ITER_VAL(InternalIter),
+		typename Ref = ITER_REF(InternalIter),
+		typename Point = ITER_POINT(InternalIter),
+		typename Diff = ITER_DIFF(InternalIter),
 		typename Deref = Ref>
 	class base_iterator
 	{
@@ -152,7 +159,7 @@ namespace set
 		InternalIter iter_;
 	};
 
-	template<typename Child, typename InternalIter, typename Ret, typename Diff = typename std::iterator_traits<InternalIter>::difference_type>
+	template<typename Child, typename InternalIter, typename Ret, typename Diff = ITER_DIFF(InternalIter)>
 	class transform_iterator :
 		public base_iterator<Child, InternalIter, Ret, const Ret&, const Ret*, Diff, Ret>
 	{
@@ -219,7 +226,7 @@ namespace set
 	class select_iterator : public transform_iterator<
 		select_iterator<InternalIter, Func>,
 		InternalIter,
-		typename function_traits<Func>::result_type>
+		typename FUNC_RET(Func)>
 	{
 	public:
 		select_iterator(const InternalIter &iter, const InternalIter &end, const Func &transform) :
@@ -245,8 +252,8 @@ namespace set
 	template<typename InternalIter, typename KeyFunc, typename CompFunc>
 	class order_by_iterator : public base_iterator<
 		order_by_iterator<InternalIter, KeyFunc, CompFunc>,
-		typename std::vector<std::reference_wrapper<const typename std::iterator_traits<InternalIter>::value_type>>::const_iterator,
-		const typename std::iterator_traits<InternalIter>::value_type>
+		typename std::vector<std::reference_wrapper<const ITER_VAL(InternalIter)>>::const_iterator,
+		const ITER_VAL(InternalIter)>
 	{
 		using storage_type = std::vector<std::reference_wrapper<value_type>>;
 
@@ -397,10 +404,10 @@ namespace set
 	{
 	public:
 		using const_iterator = Iterator;
-		using difference_type = typename std::iterator_traits<Iterator>::difference_type;
-		using value_type = typename std::iterator_traits<Iterator>::value_type;
-		using reference = typename std::iterator_traits<Iterator>::reference;
-		using pointer = typename std::iterator_traits<Iterator>::pointer;
+		using difference_type = ITER_DIFF(Iterator);
+		using value_type = ITER_VAL(Iterator);
+		using reference = ITER_REF(Iterator);
+		using pointer = ITER_POINT(Iterator);
 
 		enumerable(const Iterator &begin, const Iterator &end, size_t size) :
 			begin_(begin),
@@ -422,7 +429,7 @@ namespace set
 		template<typename Func>
 		auto select(const Func &transform) const
 		{
-			return enumerable<function_traits<Func>::result_type, select_iterator<Iterator, Func>>(
+			return enumerable<FUNC_RET(Func), select_iterator<Iterator, Func>>(
 				select_iterator<Iterator, Func>(begin_, end_, transform),
 				select_iterator<Iterator, Func>(end_, end_, transform),
 				size_);
@@ -452,7 +459,7 @@ namespace set
 		/// Returns -1 if no element is found
 		/// </summary>
 		/// <param name="filter">function&lt;any(item)&gt;</param>
-		template<typename Func, ENABLE_IF(PARAM_COUNT(Func) == 1)>	// todo: god this is evil
+		template<typename Func, ENABLE_IF(FUNC_PARAM_COUNT(Func) == 1)>	// todo: god this is evil
 		difference_type first_index(const Func &filter)
 		{
 			for (Iterator iter = begin_; iter != end_; iter++)
@@ -465,10 +472,10 @@ namespace set
 		/// Returns -1 if no element is found
 		/// </summary>
 		/// <param name="filter">function&lt;any(item, index)&gt;</param>
-		template<typename Func, ENABLE_IF(PARAM_COUNT(Func) == 2)>
+		template<typename Func, ENABLE_IF(FUNC_PARAM_COUNT(Func) == 2)>
 		difference_type first_index(const Func &filter)
 		{
-			ARG_TYPE(Func, 1) i = 0;
+			FUNC_ARG_TYPE(Func, 1) i = 0;
 			for (Iterator iter = begin_; iter != end_; iter++, i++)
 				if (filter(*iter, i))
 					return i;
@@ -478,8 +485,7 @@ namespace set
 		template<typename KeyFunc>
 		auto order_by(const KeyFunc &keySelector)
 		{
-			using key_type = function_traits<KeyFunc>::result_type;
-			static const auto comparison = [](const key_type &a, const key_type &b) {
+			static const auto comparison = [](const FUNC_RET(KeyFunc) &a, const FUNC_RET(KeyFunc) &b) {
 				if (a > b) {
 					return 1;
 				} else if (a < b) {
@@ -561,6 +567,17 @@ namespace set
 #pragma endregion
 }
 
+#pragma region undef macros
+
 #undef ENABLE_IF
-#undef ARG_TYPE
-#undef PARAM_COUNT
+
+#undef ITER_DIFF
+#undef ITER_POINT
+#undef ITER_REF
+#undef ITER_VAL
+
+#undef FUNC_RET
+#undef FUNC_ARG_TYPE
+#undef FUNC_PARAM_COUNT
+
+#pragma endregion
