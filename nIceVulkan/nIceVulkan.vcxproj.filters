@@ -263,7 +263,7 @@
     <ClCompile Include="src\model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inc\vkwrap\physical_device.cpp">
+    <ClCompile Include="src\vkwrap\physical_device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
