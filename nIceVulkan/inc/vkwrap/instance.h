@@ -1,7 +1,6 @@
 #pragma once
-#include "vulkan/vk_cpp.h"
+#include "vkwrap/physical_device.h"
 #include <string>
-#include <vector>
 
 namespace nif
 {
@@ -14,13 +13,13 @@ namespace nif
 		~instance();
 
 		vk::Instance handle() const;
-		const std::vector<vk::PhysicalDevice>& physical_handles() const;
+		const std::vector<physical_device>& physical_devices() const;
 
 		static const std::vector<const char*>& layers();
 
 	private:
 		vk::Instance handle_;
-		std::vector<vk::PhysicalDevice> physical_handles_;
+		std::vector<physical_device> physical_devices_;
 #ifdef _DEBUG
 		vk::DebugReportCallbackEXT debug_report_;
 		PFN_vkDestroyDebugReportCallbackEXT destroy_debug_report_;

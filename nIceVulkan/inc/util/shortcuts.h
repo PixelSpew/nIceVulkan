@@ -1,3 +1,11 @@
 #pragma once
+#include "vulkan/vk_cpp.h"
 
-#define VK_TRY(Func) if (Func != vk::Result::eVkSuccess) throw runtime_error("fail")
+namespace nif
+{
+	inline void vk_try(vk::Result result)
+	{
+		if (result != vk::Result::eVkSuccess)
+			throw std::runtime_error("fail");
+	}
+}

@@ -7,18 +7,12 @@ using namespace std;
 
 namespace nif
 {
-	device::device(const instance &instance)
-		: instance_(instance)
+	device::device(const instance &instance) :
+		instance_(instance),
+		physical_device_(instance.physical_devices()[0])
 	{
-		physical_handle_ = instance.physical_handles()[0];
-
-		uint32_t queueCount;
-		vk::getPhysicalDeviceQueueFamilyProperties(physical_handle_, &queueCount, nullptr);
-		vector<vk::QueueFamilyProperties> queueProps(queueCount);
-		vk::getPhysicalDeviceQueueFamilyProperties(physical_handle_, &queueCount, queueProps.data());
-
 		uint32_t graphicsQueueIndex = static_cast<uint32_t>(
-			set::from(queueProps)
+			set::from(physical_device_.queue_props())
 				.first_index([](const vk::QueueFamilyProperties &x) {
 					return x.queueFlags() & VK_QUEUE_GRAPHICS_BIT;
 				}));
@@ -40,16 +34,16 @@ namespace nif
 			.enabledLayerCount(static_cast<uint32_t>(instance.layers().size()))
 			.ppEnabledLayerNames(instance.layers().data());
 
-		VK_TRY(vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_));
+		vk_try(vk::createDevice(physical_device_.handle(), &deviceCreateInfo, nullptr, &handle_));
 
 		//get memory properties
-		vk::getPhysicalDeviceMemoryProperties(physical_handle_, &memory_properties_);
+		vk::getPhysicalDeviceMemoryProperties(physical_device_.handle(), &memory_properties_);
 
 		//get depth format
 		depth_format_ = set::from({ vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm })
 			.first([&](auto &format) {
 				vk::FormatProperties formatProps;
-				vk::getPhysicalDeviceFormatProperties(physical_handle_, format, &formatProps);
+				vk::getPhysicalDeviceFormatProperties(physical_device_.handle(), format, &formatProps);
 				return formatProps.optimalTilingFeatures() & vk::FormatFeatureFlagBits::eDepthStencilAttachment;
 			});
 
@@ -80,7 +74,7 @@ namespace nif
 
 	vk::PhysicalDevice device::physical_handle() const
 	{
-		return physical_handle_;
+		return physical_device_.handle();
 	}
 
 	const vk::PhysicalDeviceMemoryProperties& device::memory_properties() const

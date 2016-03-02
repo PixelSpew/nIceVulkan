@@ -2,6 +2,7 @@
 #include "vkwrap/instance.h"
 #include "util/file.h"
 #include "util/directory.h"
+#include "util/setops.h"
 #include "util/shortcuts.h"
 
 using namespace std;
@@ -51,13 +52,15 @@ namespace nif
 			.ppEnabledExtensionNames(extensions.data())
 			.enabledLayerCount(static_cast<uint32_t>(layers().size()))
 			.ppEnabledLayerNames(layers().data());
-
-		VK_TRY(vk::createInstance(&instanceCreateInfo, nullptr, &handle_));
+		vk_try(vk::createInstance(&instanceCreateInfo, nullptr, &handle_));
 
 		uint32_t gpuCount;
-		VK_TRY(vk::enumeratePhysicalDevices(handle_, &gpuCount, nullptr));
-		physical_handles_.resize(gpuCount);
-		VK_TRY(vk::enumeratePhysicalDevices(handle_, &gpuCount, physical_handles_.data()));
+		vk_try(vk::enumeratePhysicalDevices(handle_, &gpuCount, nullptr));
+		std::vector<vk::PhysicalDevice> physicalHandles(gpuCount);
+		vk_try(vk::enumeratePhysicalDevices(handle_, &gpuCount, physicalHandles.data()));
+		physical_devices_ = set::from(physicalHandles)
+			.select([](const vk::PhysicalDevice x) { return physical_device(x); })
+			.to_vector();
 
 #ifdef _DEBUG
 		directory::create_directory("log");
@@ -99,9 +102,9 @@ namespace nif
 		return handle_;
 	}
 
-	const vector<vk::PhysicalDevice>& instance::physical_handles() const
+	const vector<physical_device>& instance::physical_devices() const
 	{
-		return physical_handles_;
+		return physical_devices_;
 	}
 
 	const vector<const char*>& instance::layers()

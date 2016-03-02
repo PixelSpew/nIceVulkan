@@ -172,6 +172,7 @@
     <ClInclude Include="inc\math\vec2.h" />
     <ClInclude Include="inc\math\vec3.h" />
     <ClInclude Include="inc\math\vec4.h" />
+    <ClInclude Include="inc\vkwrap\physical_device.h" />
     <ClInclude Include="inc\vkwrap\pipeline.h" />
     <ClInclude Include="inc\vkwrap\pipeline_cache.h" />
     <ClInclude Include="inc\vkwrap\pipeline_layout.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="inc\vkwrap\physical_device.cpp" />
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\mouse.cpp" />
     <ClCompile Include="src\keyboard.cpp" />

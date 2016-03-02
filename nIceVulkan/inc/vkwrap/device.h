@@ -21,7 +21,7 @@ namespace nif
 	private:
 		vk::Device handle_;
 		const instance &instance_;
-		vk::PhysicalDevice physical_handle_;
+		const physical_device &physical_device_;
 		vk::PhysicalDeviceMemoryProperties memory_properties_;
 		vk::Format depth_format_;
 		vk::Queue queue_;
