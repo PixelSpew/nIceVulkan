@@ -39,9 +39,7 @@ namespace nif
 		//get depth format
 		depth_format_ = set::from({ vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm })
 			.first([&](auto &format) {
-				vk::FormatProperties formatProps;
-				vk::getPhysicalDeviceFormatProperties(physical_device_.handle(), format, &formatProps);
-				return formatProps.optimalTilingFeatures() & vk::FormatFeatureFlagBits::eDepthStencilAttachment;
+				return physical_device_.query_format_properties(format).optimalTilingFeatures() & vk::FormatFeatureFlagBits::eDepthStencilAttachment;
 			});
 
 		//get graphics queue

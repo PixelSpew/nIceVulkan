@@ -30,4 +30,11 @@ namespace nif
 	{
 		return memory_properties_;
 	}
+
+	vk::FormatProperties physical_device::query_format_properties(vk::Format format) const
+	{
+		vk::FormatProperties ret;
+		vk::getPhysicalDeviceFormatProperties(handle_, format, &ret);
+		return ret;
+	}
 }
