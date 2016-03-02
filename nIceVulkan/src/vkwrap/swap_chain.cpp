@@ -20,12 +20,14 @@ namespace nif
 	swap_chain::swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
 		: device_(device), surface_(device, platformHandle, platformWindow)
 	{
+		vk::PhysicalDevice physicalHandle = device.physical_device().handle();
+
 		uint32_t formatCount;
-		if (vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, nullptr) != vk::Result::eVkSuccess)
+		if (vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, surface_.handle(), &formatCount, nullptr) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 
 		std::vector<vk::SurfaceFormatKHR> surfFormats(formatCount);
-		if (vk::getPhysicalDeviceSurfaceFormatsKHR(device.physical_handle(), surface_.handle(), &formatCount, surfFormats.data()) != vk::Result::eVkSuccess)
+		if (vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, surface_.handle(), &formatCount, surfFormats.data()) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 
 		if (formatCount == 1 && surfFormats[0].format() == vk::Format::eUndefined)

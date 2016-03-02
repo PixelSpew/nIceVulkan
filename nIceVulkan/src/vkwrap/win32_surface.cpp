@@ -17,25 +17,22 @@ namespace nif
 
 		//////////////
 
-		uint32_t queueCount;
-		vk::getPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, nullptr);
+		vk::PhysicalDevice physicalHandle = device.physical_device().handle();
+		const std::vector<vk::QueueFamilyProperties>& queueProps = device.physical_device().queue_props();
 
-		std::vector<vk::QueueFamilyProperties> queueProps(queueCount);
-		vk::getPhysicalDeviceQueueFamilyProperties(device.physical_handle(), &queueCount, queueProps.data());
-
-		std::vector<vk::Bool32> supportsPresent(queueCount);
-		for (uint32_t i = 0; i < queueCount; i++)
-			if (vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
+		std::vector<vk::Bool32> supportsPresent(queueProps.size());
+		for (uint32_t i = 0; i < queueProps.size(); i++)
+			if (vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
 				throw runtime_error("fail");
 
 		set::from(queueProps)
 			.first_index([&](const vk::QueueFamilyProperties &x, uint32_t i) {
-				if (vk::getPhysicalDeviceSurfaceSupportKHR(device.physical_handle(), i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
+				if (vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
 					throw runtime_error("fail");
 				return x.queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent[i];
 			});
 
-		for (uint32_t i = 0; i < queueCount; i++)
+		for (uint32_t i = 0; i < queueProps.size(); i++)
 		{
 			if (queueProps[i].queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent[i])
 			{
@@ -49,15 +46,15 @@ namespace nif
 
 		/////////
 
-		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(device.physical_handle(), handle_, &capabilities_) != vk::Result::eVkSuccess)
+		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(physicalHandle, handle_, &capabilities_) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 
 		uint32_t presentModeCount;
-		if (vk::getPhysicalDeviceSurfacePresentModesKHR(device.physical_handle(), handle_, &presentModeCount, nullptr) != vk::Result::eVkSuccess)
+		if (vk::getPhysicalDeviceSurfacePresentModesKHR(physicalHandle, handle_, &presentModeCount, nullptr) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 
 		present_modes_.resize(presentModeCount);
-		if (vk::getPhysicalDeviceSurfacePresentModesKHR(device.physical_handle(), handle_, &presentModeCount, present_modes_.data()) != vk::Result::eVkSuccess)
+		if (vk::getPhysicalDeviceSurfacePresentModesKHR(physicalHandle, handle_, &presentModeCount, present_modes_.data()) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
 	}
 

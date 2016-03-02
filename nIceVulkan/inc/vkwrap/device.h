@@ -13,16 +13,14 @@ namespace nif
 
 		vk::Device handle() const;
 		const instance& parent_instance() const;
-		vk::PhysicalDevice physical_handle() const;
-		const vk::PhysicalDeviceMemoryProperties& memory_properties() const;
+		const physical_device& physical_device() const;
 		vk::Format depth_format() const;
 		vk::Queue queue() const;
 
 	private:
 		vk::Device handle_;
 		const instance &instance_;
-		const physical_device &physical_device_;
-		vk::PhysicalDeviceMemoryProperties memory_properties_;
+		const nif::physical_device &physical_device_;
 		vk::Format depth_format_;
 		vk::Queue queue_;
 	};

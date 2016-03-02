@@ -36,9 +36,6 @@ namespace nif
 
 		vk_try(vk::createDevice(physical_device_.handle(), &deviceCreateInfo, nullptr, &handle_));
 
-		//get memory properties
-		vk::getPhysicalDeviceMemoryProperties(physical_device_.handle(), &memory_properties_);
-
 		//get depth format
 		depth_format_ = set::from({ vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm })
 			.first([&](auto &format) {
@@ -72,14 +69,9 @@ namespace nif
 		return instance_;
 	}
 
-	vk::PhysicalDevice device::physical_handle() const
+	const physical_device & device::physical_device() const
 	{
-		return physical_device_.handle();
-	}
-
-	const vk::PhysicalDeviceMemoryProperties& device::memory_properties() const
-	{
-		return memory_properties_;
+		return physical_device_;
 	}
 
 	vk::Format device::depth_format() const

@@ -19,7 +19,7 @@ namespace nif
 		{
 			if (typeBits & 1)
 			{
-				if (device.memory_properties().memoryTypes()[i].propertyFlags() & memtype)
+				if (device.physical_device().memory_properties().memoryTypes()[i].propertyFlags() & memtype)
 				{
 					mem_alloc.memoryTypeIndex(i);
 					break;
