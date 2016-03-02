@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "vkwrap/device.h"
 #include "util/setops.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -9,9 +10,7 @@ namespace nif
 	device::device(const instance &instance)
 		: instance_(instance)
 	{
-		uint32_t gpuCount;
-		if (vk::enumeratePhysicalDevices(instance.handle(), &gpuCount, &physical_handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		physical_handle_ = instance.physical_handles()[0];
 
 		uint32_t queueCount;
 		vk::getPhysicalDeviceQueueFamilyProperties(physical_handle_, &queueCount, nullptr);
@@ -41,8 +40,7 @@ namespace nif
 			.enabledLayerCount(static_cast<uint32_t>(instance.layers().size()))
 			.ppEnabledLayerNames(instance.layers().data());
 
-		if (vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		VK_TRY(vk::createDevice(physical_handle_, &deviceCreateInfo, nullptr, &handle_));
 
 		//get memory properties
 		vk::getPhysicalDeviceMemoryProperties(physical_handle_, &memory_properties_);

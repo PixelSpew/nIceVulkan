@@ -13,10 +13,12 @@ using namespace tinyobj;
 
 int main()
 {
-	window win;
-	render_pass renderpass(win.vk_device());
+	instance instance("nIce Framework");
+	device device(instance);
+	window win(device);
+	render_pass renderpass(device);
 
-	model sphere(win.vk_device(), "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
+	model sphere(device, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
 	std::vector<command_buffer> drawCmdBuffers;
 	for (uint32_t i = 0; i < win.vk_swap_chain().image_count(); i++)
@@ -27,9 +29,9 @@ int main()
 		framebuffers.push_back(framebuffer(win.vk_width(), win.vk_height(), renderpass, { win.vk_swap_chain().buffers()[i].view, win.depth_stencil_view() }));
 
 	vector<descriptor_set_layout> descriptorSetLayouts;
-	descriptorSetLayouts.push_back(descriptor_set_layout(win.vk_device()));
+	descriptorSetLayouts.push_back(descriptor_set_layout(device));
 	pipeline_layout pipelineLayout(descriptorSetLayouts);
-	descriptor_pool descriptorPool(win.vk_device());
+	descriptor_pool descriptorPool(device);
 
 	//prepare uniform buffers
 	struct ubo_type {
@@ -42,14 +44,14 @@ int main()
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
-	buffer<ubo_type> uboBuffer(win.vk_device(), vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
+	buffer<ubo_type> uboBuffer(device, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
 	descriptor_set descriptorSet(descriptorSetLayouts, descriptorPool, uboBuffer);
 
 	vector<shader_module> shaderModules;
-	shaderModules.push_back(shader_module(win.vk_device(), file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
-	shaderModules.push_back(shader_module(win.vk_device(), file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
+	shaderModules.push_back(shader_module(device, file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
+	shaderModules.push_back(shader_module(device, file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
 
-	pipeline_cache pipelineCache(win.vk_device());
+	pipeline_cache pipelineCache(device);
 	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, model::vertex::pipeline_info(), pipelineCache);
 
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
@@ -82,17 +84,17 @@ int main()
 	});
 
 	win.draw().add([&](double delta) {
-		win.vk_device().wait_queue_idle();
+		device.wait_queue_idle();
 
-		semaphore presentCompleteSemaphore(win.vk_device());
+		semaphore presentCompleteSemaphore(device);
 		currentBuffer = win.vk_swap_chain().acquireNextImage(presentCompleteSemaphore, currentBuffer);
-		drawCmdBuffers[currentBuffer].submit(win.vk_device());
+		drawCmdBuffers[currentBuffer].submit(device);
 		win.vk_swap_chain().queuePresent(currentBuffer);
 
 		postPresentCmdBuffer.begin();
 		postPresentCmdBuffer.pipeline_barrier(win.vk_swap_chain().buffers()[currentBuffer].image);
 		postPresentCmdBuffer.end();
-		postPresentCmdBuffer.submit(win.vk_device());
+		postPresentCmdBuffer.submit(device);
 	});
 	win.run(60);
 }

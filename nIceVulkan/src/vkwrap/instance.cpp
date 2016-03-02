@@ -2,6 +2,7 @@
 #include "vkwrap/instance.h"
 #include "util/file.h"
 #include "util/directory.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -51,8 +52,12 @@ namespace nif
 			.enabledLayerCount(static_cast<uint32_t>(layers().size()))
 			.ppEnabledLayerNames(layers().data());
 
-		if (vk::createInstance(&instanceCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		VK_TRY(vk::createInstance(&instanceCreateInfo, nullptr, &handle_));
+
+		uint32_t gpuCount;
+		VK_TRY(vk::enumeratePhysicalDevices(handle_, &gpuCount, nullptr));
+		physical_handles_.resize(gpuCount);
+		VK_TRY(vk::enumeratePhysicalDevices(handle_, &gpuCount, physical_handles_.data()));
 
 #ifdef _DEBUG
 		directory::create_directory("log");
@@ -92,6 +97,11 @@ namespace nif
 	vk::Instance instance::handle() const
 	{
 		return handle_;
+	}
+
+	const vector<vk::PhysicalDevice>& instance::physical_handles() const
+	{
+		return physical_handles_;
 	}
 
 	const vector<const char*>& instance::layers()

@@ -52,15 +52,13 @@ namespace nif
 
 #define S window_static
 
-	window::window()
+	window::window(const device &device)
 		: hinstance_(S::get_hinstance()),
 		  hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
-		  instance_("nIce Framework"),
-		  device_(instance_),
-		  swap_(device_, hinstance_, hwnd_),
+		  swap_(device, hinstance_, hwnd_),
 		  cmdpool_(swap_.surface()),
-		  depth_stencil_image_(width_, height_, device_),	// todo: use vk_width_ and vk_height_
-		  depth_stencil_view_(depth_stencil_image_, device_.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
+		  depth_stencil_image_(width_, height_, device),	// todo: use vk_width_ and vk_height_
+		  depth_stencil_view_(depth_stencil_image_, device.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
 	{
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);
@@ -72,8 +70,8 @@ namespace nif
 		swap_.setup(setupCmdBuffer, &vk_width_, &vk_height_);
 		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		setupCmdBuffer.end();
-		setupCmdBuffer.submit(device_);
-		device_.wait_queue_idle();
+		setupCmdBuffer.submit(device);
+		device.wait_queue_idle();
 	}
 
 	window::~window()
@@ -96,7 +94,7 @@ namespace nif
 
 			while (lag >= updateRate) {
 				MSG msg;
-				if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+				while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 					if (msg.message == WM_QUIT)
 						return;
 
@@ -148,16 +146,6 @@ namespace nif
 	const HINSTANCE window::hinstance() const
 	{
 		return hinstance_;
-	}
-
-	const instance& window::vk_instance() const
-	{
-		return instance_;
-	}
-
-	const device& window::vk_device() const
-	{
-		return device_;
 	}
 
 	const command_pool& window::vk_command_pool() const

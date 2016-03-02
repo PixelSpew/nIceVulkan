@@ -10,7 +10,7 @@ namespace nif
 	public:
 		using timeevent = dispatcher<window, void(double delta)>;
 
-		window();
+		window(const device &device);
 		window(const window&) = delete;
 		~window();
 		void run(double updateRate);
@@ -23,8 +23,6 @@ namespace nif
 
 		const HWND hwnd() const;
 		const HINSTANCE hinstance() const;
-		const instance& vk_instance() const;
-		const device& vk_device() const;
 		const command_pool& vk_command_pool() const;
 		const image_view& depth_stencil_view() const;
 		uint32_t vk_width() const;
@@ -42,8 +40,6 @@ namespace nif
 		uint32_t vk_height_ = 810;
 		HINSTANCE hinstance_;
 		HWND hwnd_;
-		instance instance_;
-		device device_;
 		swap_chain swap_;
 		command_pool cmdpool_;
 		image depth_stencil_image_;
