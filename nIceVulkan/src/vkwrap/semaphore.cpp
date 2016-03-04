@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/semaphore.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -9,8 +10,7 @@ namespace nif
 		: device_(device)
 	{
 		vk::SemaphoreCreateInfo createInfo;
-		if (vk::createSemaphore(device.handle(), &createInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createSemaphore(device.handle(), &createInfo, nullptr, &handle_));
 	}
 
 	semaphore::~semaphore()

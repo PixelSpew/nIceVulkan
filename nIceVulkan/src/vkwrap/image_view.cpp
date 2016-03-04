@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/image_view.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -13,8 +14,7 @@ namespace nif
 		createInfo.format(format);
 		createInfo.subresourceRange(vk::ImageSubresourceRange(aspectFlags, 0, 1, 0, 1));
 		createInfo.image(image.handle());
-		if (vk::createImageView(device_.handle(), &createInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createImageView(device_.handle(), &createInfo, nullptr, &handle_));
 	}
 
 	image_view::image_view(image_view &&old)

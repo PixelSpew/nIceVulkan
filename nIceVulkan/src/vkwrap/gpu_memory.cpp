@@ -1,41 +1,39 @@
 #include "stdafx.h"
 #include "vkwrap/gpu_memory.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	gpu_memory::gpu_memory()
-		: handle_(nullptr) {}
+	gpu_memory::gpu_memory() :
+		handle_(nullptr) {}
 
-	gpu_memory::gpu_memory(const device &device, const vk::MemoryRequirements &memreqs, const vk::MemoryPropertyFlags &memtype, const void *data)
-		: device_(&device)
+	gpu_memory::gpu_memory(
+		const device &device,
+		const vk::MemoryRequirements &memreqs,
+		const vk::MemoryPropertyFlags &memtype,
+		const void *data) :
+		device_(&device)
 	{
 		vk::MemoryAllocateInfo mem_alloc;
 		mem_alloc.allocationSize(memreqs.size());
 
-		uint32_t typeBits = memreqs.memoryTypeBits();
-		for (uint32_t i = 0; i < 32; i++)
-		{
-			if (typeBits & 1)
-			{
-				if (device.physical_device().memory_properties().memoryTypes()[i].propertyFlags() & memtype)
-				{
+		const vk::MemoryType *memoryTypes = device.physical_device().memory_properties().memoryTypes();
+		for (uint32_t i = 0; i < 32; i++) {
+			if (memreqs.memoryTypeBits() & 1 << i) {
+				if (memoryTypes[i].propertyFlags() & memtype) {
 					mem_alloc.memoryTypeIndex(i);
 					break;
 				}
 			}
-			typeBits >>= 1;
 		}
 
-		if (vk::allocateMemory(device.handle(), &mem_alloc, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::allocateMemory(device.handle(), &mem_alloc, nullptr, &handle_));
 
-		if (data != nullptr)
-		{
+		if (data != nullptr) {
 			void *memmap;
-			if (vk::mapMemory(device.handle(), handle_, 0, memreqs.size(), 0, &memmap) != vk::Result::eVkSuccess)
-				throw runtime_error("fail");
+			vk_try(vk::mapMemory(device.handle(), handle_, 0, memreqs.size(), 0, &memmap));
 			memcpy(memmap, data, memreqs.size());
 			vk::unmapMemory(device.handle(), handle_);
 		}

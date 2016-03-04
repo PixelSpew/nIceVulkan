@@ -1,40 +1,34 @@
 #include "stdafx.h"
 #include "vkwrap/swap_chain.h"
 #include "util/setops.h"
+#include "util/shortcuts.h"
 #include <map>
 
 using namespace std;
 
 namespace nif
 {
-	swap_chain::buffer::buffer(const device &device, const vk::Image imghandle, const vk::Format format)
-		: image(device, imghandle), view(image, format, vk::ImageAspectFlagBits::eColor)
+	swap_chain::buffer::buffer(const device &device, const vk::Image imghandle, const vk::Format format) :
+		image(device, imghandle),
+		view(image, format, vk::ImageAspectFlagBits::eColor)
 	{
 	}
 
-	swap_chain::buffer::buffer(buffer &&old)
-		: image(move(old.image)), view(move(old.view))
+	swap_chain::buffer::buffer(buffer &&old) :
+		image(move(old.image)),
+		view(move(old.view))
 	{
 	}
 
-	swap_chain::swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
-		: device_(device), surface_(device, platformHandle, platformWindow)
+	swap_chain::swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow) :
+		device_(device),
+		surface_(device, platformHandle, platformWindow)
 	{
-		vk::PhysicalDevice physicalHandle = device.physical_device().handle();
-
-		uint32_t formatCount;
-		if (vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, surface_.handle(), &formatCount, nullptr) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
-		std::vector<vk::SurfaceFormatKHR> surfFormats(formatCount);
-		if (vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, surface_.handle(), &formatCount, surfFormats.data()) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
-		if (formatCount == 1 && surfFormats[0].format() == vk::Format::eUndefined)
-			color_format_ = vk::Format::eB8G8R8A8Unorm;
-		else
-			color_format_ = surfFormats[0].format();
-		color_space_ = surfFormats[0].colorSpace();
+		auto &formats = surface_.formats();
+		color_format_ = formats.size() == 1 && formats[0].format() == vk::Format::eUndefined ?
+			vk::Format::eB8G8R8A8Unorm :
+			formats[0].format();
+		color_space_ = formats[0].colorSpace();
 	}
 
 	swap_chain::~swap_chain()
@@ -90,15 +84,11 @@ namespace nif
 		swapchainCI.clipped(VK_TRUE);
 		swapchainCI.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
 
-		if (vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &handle_));
 
-		if (vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, nullptr) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
+		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, nullptr));
 		vector<vk::Image> swapchainImages(image_count_);
-		if (vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, swapchainImages.data()) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, swapchainImages.data()));
 
 		buffers_.reserve(image_count_);
 		for (uint32_t i = 0; i < image_count_; i++) {

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "vkwrap/pipeline.h"
 #include "util/setops.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -11,8 +12,8 @@ namespace nif
 		const render_pass &pass,
 		const std::vector<shader_module> &shaderModules,
 		const vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo,
-		const pipeline_cache &cache)
-		: device_(pass.parent_device())
+		const pipeline_cache &cache) :
+		device_(pass.parent_device())
 	{
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;
 		inputAssemblyState.topology(vk::PrimitiveTopology::eTriangleList);
@@ -49,9 +50,10 @@ namespace nif
 		depthStencilState.stencilTestEnable(VK_FALSE);
 		depthStencilState.front(depthStencilState.back());
 
-		std::vector<vk::DynamicState> dynamicStateEnables;
-		dynamicStateEnables.push_back(vk::DynamicState::eViewport);
-		dynamicStateEnables.push_back(vk::DynamicState::eScissor);
+		std::vector<vk::DynamicState> dynamicStateEnables = {
+			vk::DynamicState::eViewport,
+			vk::DynamicState::eScissor
+		};
 
 		vk::PipelineDynamicStateCreateInfo dynamicState;
 		dynamicState.dynamicStateCount(static_cast<uint32_t>(dynamicStateEnables.size()));
@@ -59,13 +61,8 @@ namespace nif
 
 		auto shaderStages = set::from(shaderModules)
 			.select([](const shader_module &x) {
-				vk::PipelineShaderStageCreateInfo ret;
-				ret.stage(x.stage());
-				ret.module(x.handle());
-				ret.pName("main");
-				return ret;
-			})
-			.to_vector();
+				return vk::PipelineShaderStageCreateInfo(0, x.stage(), x.handle(), "main", nullptr);
+			}).to_vector();
 
 		vk::GraphicsPipelineCreateInfo pipelineCreateInfo;
 		pipelineCreateInfo.layout(layout.handle());
@@ -81,8 +78,7 @@ namespace nif
 		pipelineCreateInfo.pDepthStencilState(&depthStencilState);
 		pipelineCreateInfo.pDynamicState(&dynamicState);
 
-		if (vk::createGraphicsPipelines(pass.parent_device().handle(), cache.handle(), 1, &pipelineCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createGraphicsPipelines(pass.parent_device().handle(), cache.handle(), 1, &pipelineCreateInfo, nullptr, &handle_));
 	}
 
 	pipeline::~pipeline()

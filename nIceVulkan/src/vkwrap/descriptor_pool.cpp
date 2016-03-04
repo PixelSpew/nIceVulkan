@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include "vkwrap/descriptor_pool.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	descriptor_pool::descriptor_pool(const device &device)
-		: device_(device)
+	descriptor_pool::descriptor_pool(const device &device) :
+		device_(device)
 	{
 		vk::DescriptorPoolSize typeCounts[1];
 		typeCounts[0].type(vk::DescriptorType::eUniformBuffer);
@@ -17,8 +18,7 @@ namespace nif
 		descriptorPoolInfo.pPoolSizes(typeCounts);
 		descriptorPoolInfo.maxSets(1);
 
-		if (vk::createDescriptorPool(device.handle(), &descriptorPoolInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createDescriptorPool(device.handle(), &descriptorPoolInfo, nullptr, &handle_));
 	}
 
 	descriptor_pool::~descriptor_pool()

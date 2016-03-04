@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/buffer.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -12,14 +13,12 @@ namespace nif
 		bufInfo.size(static_cast<vk::DeviceSize>(size));
 		bufInfo.usage(flags);
 
-		if (vk::createBuffer(device.handle(), &bufInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createBuffer(device.handle(), &bufInfo, nullptr, &handle_));
 
 		vk::MemoryRequirements memreq;
 		vk::getBufferMemoryRequirements(device.handle(), handle_, &memreq);
 		gpumem_ = gpu_memory(device, memreq, vk::MemoryPropertyFlagBits::eHostVisible, data);
-		if (vk::bindBufferMemory(device.handle(), handle_, gpumem_.handle(), 0) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::bindBufferMemory(device.handle(), handle_, gpumem_.handle(), 0));
 	}
 
 	ibuffer::~ibuffer()

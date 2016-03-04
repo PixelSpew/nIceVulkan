@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/pipeline_cache.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -9,8 +10,7 @@ namespace nif
 		: device_(device)
 	{
 		vk::PipelineCacheCreateInfo pipelineCacheCreateInfo;
-		if (vk::createPipelineCache(device.handle(), &pipelineCacheCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createPipelineCache(device.handle(), &pipelineCacheCreateInfo, nullptr, &handle_));
 	}
 
 	pipeline_cache::~pipeline_cache()

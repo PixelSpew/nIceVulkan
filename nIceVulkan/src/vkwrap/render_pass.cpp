@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/render_pass.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -27,36 +28,21 @@ namespace nif
 		attachments[1].initialLayout(vk::ImageLayout::eColorAttachmentOptimal);
 		attachments[1].finalLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
-		vk::AttachmentReference colorReference;
-		colorReference.attachment(0);
-		colorReference.layout(vk::ImageLayout::eColorAttachmentOptimal);
-
-		vk::AttachmentReference depthReference;
-		depthReference.attachment(1);
-		depthReference.layout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+		vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+		vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 		vk::SubpassDescription subpass;
-		subpass.pipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-		subpass.flags(0);
-		subpass.inputAttachmentCount(0);
-		subpass.pInputAttachments(nullptr);
 		subpass.colorAttachmentCount(1);
 		subpass.pColorAttachments(&colorReference);
-		subpass.pResolveAttachments(nullptr);
 		subpass.pDepthStencilAttachment(&depthReference);
-		subpass.preserveAttachmentCount(0);
-		subpass.pPreserveAttachments(nullptr);
 
 		vk::RenderPassCreateInfo renderPassInfo;
 		renderPassInfo.attachmentCount(2);
 		renderPassInfo.pAttachments(attachments);
 		renderPassInfo.subpassCount(1);
 		renderPassInfo.pSubpasses(&subpass);
-		renderPassInfo.dependencyCount(0);
-		renderPassInfo.pDependencies(nullptr);
 
-		if (vk::createRenderPass(device.handle(), &renderPassInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createRenderPass(device.handle(), &renderPassInfo, nullptr, &handle_));
 	}
 
 	render_pass::~render_pass()

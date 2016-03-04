@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/shader_module.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -12,8 +13,7 @@ namespace nif
 		moduleCreateInfo.codeSize(source.size());
 		moduleCreateInfo.pCode(reinterpret_cast<const uint32_t*>(source.data()));
 
-		if (vk::createShaderModule(device.handle(), &moduleCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createShaderModule(device.handle(), &moduleCreateInfo, nullptr, &handle_));
 	}
 
 	shader_module::shader_module(shader_module &&old)

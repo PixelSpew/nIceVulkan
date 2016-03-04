@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include "vkwrap/image.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	image::image(const int width, const int height, const device &device)
-		: device_(device)
+	image::image(const int width, const int height, const device &device) :
+		device_(device)
 	{
 		vk::ImageCreateInfo createInfo;
 		createInfo.imageType(vk::ImageType::e2D);
@@ -17,25 +18,24 @@ namespace nif
 		createInfo.samples(vk::SampleCountFlagBits::e1);
 		createInfo.tiling(vk::ImageTiling::eOptimal);
 		createInfo.usage(vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc);
-		if (vk::createImage(device.handle(), &createInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createImage(device.handle(), &createInfo, nullptr, &handle_));
 
 		vk::MemoryRequirements memreqs;
 		vk::getImageMemoryRequirements(device.handle(), handle_, &memreqs);
 		gpumem_ = gpu_memory(device, memreqs, vk::MemoryPropertyFlagBits::eDeviceLocal, nullptr);
-		if (vk::bindImageMemory(device.handle(), handle_, gpumem_.handle(), 0) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::bindImageMemory(device.handle(), handle_, gpumem_.handle(), 0));
 	}
 
-	image::image(const device &device, const vk::Image handle)
-		: device_(device), handle_(handle)
+	image::image(const device &device, const vk::Image handle) :
+		device_(device),
+		handle_(handle)
 	{
 	}
 
-	image::image(image &&old)
-		: handle_(old.handle_),
-		  gpumem_(move(old.gpumem_)),
-		  device_(old.device_) {}
+	image::image(image &&old) :
+		handle_(old.handle_),
+		gpumem_(move(old.gpumem_)),
+		device_(old.device_) {}
 
 	image::~image()
 	{

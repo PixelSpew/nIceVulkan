@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include "vkwrap/descriptor_set_layout.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	descriptor_set_layout::descriptor_set_layout(const device &device)
-		: device_(device)
+	descriptor_set_layout::descriptor_set_layout(const device &device) :
+		device_(device)
 	{
 		vk::DescriptorSetLayoutBinding layoutBinding;
 		layoutBinding.descriptorType(vk::DescriptorType::eUniformBuffer);
@@ -17,12 +18,12 @@ namespace nif
 		descriptorLayout.bindingCount(1);
 		descriptorLayout.pBindings(&layoutBinding);
 
-		if (vk::createDescriptorSetLayout(device.handle(), &descriptorLayout, NULL, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createDescriptorSetLayout(device.handle(), &descriptorLayout, NULL, &handle_));
 	}
 
-	descriptor_set_layout::descriptor_set_layout(descriptor_set_layout &&old)
-		: handle_(old.handle_), device_(move(old.device_))
+	descriptor_set_layout::descriptor_set_layout(descriptor_set_layout &&old) :
+		handle_(old.handle_),
+		device_(move(old.device_))
 	{
 		old.handle_ = nullptr;
 	}

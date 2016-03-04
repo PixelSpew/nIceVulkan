@@ -1,24 +1,26 @@
 #include "stdafx.h"
 #include "vkwrap/command_buffer.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	command_buffer::command_buffer(const command_pool &pool)
-		: pool_(pool)
+	command_buffer::command_buffer(const command_pool &pool) :
+		pool_(pool)
 	{
 		vk::CommandBufferAllocateInfo allocateInfo;
 		allocateInfo.commandPool(pool.handle());
 		allocateInfo.level(vk::CommandBufferLevel::ePrimary);
 		allocateInfo.commandBufferCount(1);
 
-		if (vk::allocateCommandBuffers(pool.parent_device().handle(), &allocateInfo, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::allocateCommandBuffers(pool.parent_device().handle(), &allocateInfo, &handle_));
 	}
 
-	command_buffer::command_buffer(command_buffer &&old)
-		: handle_(old.handle_), begin_info_(old.begin_info_), pool_(move(old.pool_))
+	command_buffer::command_buffer(command_buffer &&old) :
+		handle_(old.handle_),
+		begin_info_(old.begin_info_),
+		pool_(move(old.pool_))
 	{
 		old.handle_ = nullptr;
 	}
@@ -31,14 +33,12 @@ namespace nif
 
 	void command_buffer::begin()
 	{
-		if (vk::beginCommandBuffer(handle_, &begin_info_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::beginCommandBuffer(handle_, &begin_info_));
 	}
 
 	void command_buffer::end()
 	{
-		if (vk::endCommandBuffer(handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::endCommandBuffer(handle_));
 	}
 
 	void command_buffer::submit(const device &device)
@@ -49,8 +49,7 @@ namespace nif
 		submitInfo.commandBufferCount(1);
 		submitInfo.pCommandBuffers(&cmdbufferHandle);
 
-		if (vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE));
 	}
 
 	void command_buffer::submit(const device &device, const semaphore &semaphore)
@@ -64,8 +63,7 @@ namespace nif
 		submitInfo.commandBufferCount(1);
 		submitInfo.pCommandBuffers(&cmdbufferHandle);
 
-		if (vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE));
 	}
 
 	void command_buffer::begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height)

@@ -14,6 +14,7 @@ namespace nif
 		uint32_t queue_node_index() const;
 		const vk::SurfaceCapabilitiesKHR& capabilities() const;
 		const std::vector<vk::PresentModeKHR>& present_modes() const;
+		const std::vector<vk::SurfaceFormatKHR>& formats() const;
 
 	private:
 		vk::SurfaceKHR handle_;
@@ -23,5 +24,6 @@ namespace nif
 		uint32_t queue_node_index_;
 		vk::SurfaceCapabilitiesKHR capabilities_;
 		std::vector<vk::PresentModeKHR> present_modes_;
+		std::vector<vk::SurfaceFormatKHR> formats_;
 	};
 }

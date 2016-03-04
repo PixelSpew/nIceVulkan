@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "vkwrap/win32_surface.h"
 #include "util/setops.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -20,42 +21,26 @@ namespace nif
 		vk::PhysicalDevice physicalHandle = device.physical_device().handle();
 		const std::vector<vk::QueueFamilyProperties>& queueProps = device.physical_device().queue_props();
 
-		std::vector<vk::Bool32> supportsPresent(queueProps.size());
-		for (uint32_t i = 0; i < queueProps.size(); i++)
-			if (vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
-				throw runtime_error("fail");
-
-		set::from(queueProps)
+		queue_node_index_ = set::from(queueProps)
 			.first_index([&](const vk::QueueFamilyProperties &x, uint32_t i) {
-				if (vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent[i]) != vk::Result::eVkSuccess)
-					throw runtime_error("fail");
-				return x.queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent[i];
+				vk::Bool32 supportsPresent;
+				vk_try(vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent));
+				return x.queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent;
 			});
-
-		for (uint32_t i = 0; i < queueProps.size(); i++)
-		{
-			if (queueProps[i].queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent[i])
-			{
-				queue_node_index_ = i;
-				break;
-			}
-		}
-
-		if (queue_node_index_ == UINT32_MAX)
-			throw runtime_error("fail");
 
 		/////////
 
-		if (vk::getPhysicalDeviceSurfaceCapabilitiesKHR(physicalHandle, handle_, &capabilities_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::getPhysicalDeviceSurfaceCapabilitiesKHR(physicalHandle, handle_, &capabilities_));
 
 		uint32_t presentModeCount;
-		if (vk::getPhysicalDeviceSurfacePresentModesKHR(physicalHandle, handle_, &presentModeCount, nullptr) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-
+		vk_try(vk::getPhysicalDeviceSurfacePresentModesKHR(physicalHandle, handle_, &presentModeCount, nullptr));
 		present_modes_.resize(presentModeCount);
-		if (vk::getPhysicalDeviceSurfacePresentModesKHR(physicalHandle, handle_, &presentModeCount, present_modes_.data()) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::getPhysicalDeviceSurfacePresentModesKHR(physicalHandle, handle_, &presentModeCount, present_modes_.data()));
+
+		uint32_t formatCount;
+		vk_try(vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, handle_, &formatCount, nullptr));
+		formats_.resize(formatCount);
+		vk_try(vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, handle_, &formatCount, formats_.data()));
 	}
 
 	win32_surface::~win32_surface()
@@ -86,5 +71,10 @@ namespace nif
 	const vector<vk::PresentModeKHR>& win32_surface::present_modes() const
 	{
 		return present_modes_;
+	}
+
+	const std::vector<vk::SurfaceFormatKHR>& win32_surface::formats() const
+	{
+		return formats_;
 	}
 }

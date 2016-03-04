@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "vkwrap/pipeline_layout.h"
 #include "util/setops.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -17,8 +18,7 @@ namespace nif
 		pPipelineLayoutCreateInfo.setLayoutCount(static_cast<uint32_t>(descSetLayouts.size()));
 		pPipelineLayoutCreateInfo.pSetLayouts(handles.data());
 
-		if (vk::createPipelineLayout(device_.handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createPipelineLayout(device_.handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_));
 	}
 
 	pipeline_layout::~pipeline_layout()

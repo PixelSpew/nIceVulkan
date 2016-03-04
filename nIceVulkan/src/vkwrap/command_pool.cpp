@@ -1,19 +1,19 @@
 #include "stdafx.h"
 #include "vkwrap/command_pool.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	command_pool::command_pool(const win32_surface &surface)
-		: device_(surface.parent_device())
+	command_pool::command_pool(const win32_surface &surface) :
+		device_(surface.parent_device())
 	{
 		vk::CommandPoolCreateInfo cmdPoolInfo;
 		cmdPoolInfo.queueFamilyIndex(surface.queue_node_index());
 		cmdPoolInfo.flags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
-		if (vk::createCommandPool(surface.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createCommandPool(surface.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_));
 	}
 
 	command_pool::~command_pool()

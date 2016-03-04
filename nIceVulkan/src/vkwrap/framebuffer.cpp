@@ -1,13 +1,18 @@
 #include "stdafx.h"
 #include "vkwrap/framebuffer.h"
 #include "util/setops.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
 namespace nif
 {
-	framebuffer::framebuffer(const uint32_t width, const uint32_t height, const render_pass &pass, const std::initializer_list<std::reference_wrapper<const image_view>> views)
-		: device_(pass.parent_device())
+	framebuffer::framebuffer(
+		const uint32_t width,
+		const uint32_t height,
+		const render_pass &pass,
+		const std::initializer_list<std::reference_wrapper<const image_view>> views) :
+		device_(pass.parent_device())
 	{
 		vector<vk::ImageView> handles = set::from(views)
 			.select([](const reference_wrapper<const image_view> &x) { return x.get().handle(); })
@@ -20,8 +25,7 @@ namespace nif
 		frameBufferCreateInfo.width(width);
 		frameBufferCreateInfo.height(height);
 		frameBufferCreateInfo.layers(1);
-		if (vk::createFramebuffer(pass.parent_device().handle(), &frameBufferCreateInfo, nullptr, &handle_) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		vk_try(vk::createFramebuffer(pass.parent_device().handle(), &frameBufferCreateInfo, nullptr, &handle_));
 	}
 
 	framebuffer::framebuffer(framebuffer &&old)
