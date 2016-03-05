@@ -8,6 +8,41 @@ using namespace std;
 
 namespace nif
 {
+	namespace swap_chain_static
+	{
+		uint32_t min_image_count(const uint32_t surfmin, const uint32_t surfmax)
+		{
+			return surfmin == surfmax ? surfmin : surfmin + 1;
+		}
+
+		vk::Format image_format(vk::Format surfpref)
+		{
+			return surfpref == vk::Format::eUndefined ? vk::Format::eB8G8R8A8Unorm : surfpref;
+		}
+
+		vk::PresentModeKHR present_mode(const vector<vk::PresentModeKHR> &presentModes)
+		{
+			static map<vk::PresentModeKHR, int> modePref = {
+				{ vk::PresentModeKHR::eVkPresentModeMailboxKhr, 3 },
+				{ vk::PresentModeKHR::eVkPresentModeImmediateKhr, 2 },
+				{ vk::PresentModeKHR::eVkPresentModeFifoKhr, 1 }
+			};
+
+			return set::from(presentModes)
+				.order_by([&](const vk::PresentModeKHR x) { return modePref[x]; })
+				.last();
+		}
+
+		vk::SurfaceTransformFlagBitsKHR pretransform(const vk::SurfaceCapabilitiesKHR &surfcaps)
+		{
+			return surfcaps.supportedTransforms() & vk::SurfaceTransformFlagBitsKHR::eIdentity ?
+				vk::SurfaceTransformFlagBitsKHR::eIdentity :
+				surfcaps.currentTransform();
+		}
+	};
+
+#define S swap_chain_static
+
 	swap_chain::buffer::buffer(const device &device, const vk::Image imghandle, const vk::Format format) :
 		image(device, imghandle),
 		view(image, format, vk::ImageAspectFlagBits::eColor)
@@ -20,81 +55,57 @@ namespace nif
 	{
 	}
 
-	swap_chain::swap_chain(const device &device, const win32_surface &surface, const command_pool &cmdpool) :
-		device_(device),
+	swap_chain::swap_chain(const win32_surface &surface, const command_pool &cmdpool) :
+		device_(surface.parent_device()),
 		surface_(surface),
 		width_(surface.capabilities().currentExtent().width()),
 		height_(surface.capabilities().currentExtent().height()),
-		depth_stencil_image_(width_, height_, device),
-		depth_stencil_view_(depth_stencil_image_, device.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
+		depth_stencil_image_(width_, height_, surface.parent_device()),
+		depth_stencil_view_(depth_stencil_image_, surface.parent_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
 	{
-		auto &formats = surface.formats();
-		color_format_ = formats.size() == 1 && formats[0].format() == vk::Format::eUndefined ?
-			vk::Format::eB8G8R8A8Unorm :
-			formats[0].format();
-		color_space_ = formats[0].colorSpace();
-
-		map<vk::PresentModeKHR, int> prefModes = {
-			{ vk::PresentModeKHR::eVkPresentModeMailboxKhr, 3 },
-			{ vk::PresentModeKHR::eVkPresentModeImmediateKhr, 2 },
-			{ vk::PresentModeKHR::eVkPresentModeFifoKhr, 1 }
-		};
-
-		vk::PresentModeKHR swapchainPresentMode = set::from(surface_.present_modes())
-			.order_by([&](const vk::PresentModeKHR x) { return prefModes[x]; })
-			.last();
-
-		const vk::SurfaceCapabilitiesKHR& surfCaps = surface_.capabilities();
-		uint32_t imageCount = surfCaps.minImageCount() == surfCaps.maxImageCount() ?
-			surfCaps.maxImageCount() :
-			surfCaps.minImageCount() + 1;
-
-		vk::SurfaceTransformFlagBitsKHR preTransform;
-		if (surfCaps.supportedTransforms() & vk::SurfaceTransformFlagBitsKHR::eIdentity)
-			preTransform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
-		else
-			preTransform = surfCaps.currentTransform();
-
-		vk::SwapchainCreateInfoKHR swapchainCI;
-		swapchainCI.surface(surface_.handle());
-		swapchainCI.minImageCount(imageCount);
-		swapchainCI.imageFormat(color_format_);
-		swapchainCI.imageColorSpace(color_space_);
-		swapchainCI.imageExtent(vk::Extent2D(width_, height_));
-		swapchainCI.imageUsage(vk::ImageUsageFlagBits::eColorAttachment);
-		swapchainCI.preTransform(preTransform);
-		swapchainCI.imageArrayLayers(1);
-		swapchainCI.imageSharingMode(vk::SharingMode::eExclusive);
-		swapchainCI.queueFamilyIndexCount(0);
-		swapchainCI.pQueueFamilyIndices(nullptr);
-		swapchainCI.presentMode(swapchainPresentMode);
-		swapchainCI.clipped(VK_TRUE);
-		swapchainCI.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-
+		vk::SwapchainCreateInfoKHR swapchainCI(
+			0,
+			surface_.handle(),
+			S::min_image_count(surface_.capabilities().minImageCount(), surface_.capabilities().maxImageCount()),
+			S::image_format(surface.formats()[0].format()),
+			surface.formats()[0].colorSpace(),
+			vk::Extent2D(width_, height_),
+			1,
+			vk::ImageUsageFlagBits::eColorAttachment,
+			vk::SharingMode::eExclusive, 0, nullptr,
+			S::pretransform(surface_.capabilities()),
+			vk::CompositeAlphaFlagBitsKHR::eOpaque,
+			S::present_mode(surface.present_modes()),
+			VK_TRUE,
+			nullptr);
 		vk_try(vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &handle_));
 
-		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, nullptr));
-		vector<vk::Image> swapchainImages(image_count_);
-		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, swapchainImages.data()));
+		uint32_t imageCount;
+		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &imageCount, nullptr));
+		vector<vk::Image> swapchainImages(imageCount);
+		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &imageCount, swapchainImages.data()));
 
-		command_buffer setupCmdBuffer(cmdpool);
-		setupCmdBuffer.begin();
+		buffers_ = set::from(swapchainImages)
+			.select([&](vk::Image x) { return buffer(device_, x, swapchainCI.imageFormat()); })
+			.to_vector();
 
-		buffers_.reserve(image_count_);
-		for (uint32_t i = 0; i < image_count_; i++) {
-			buffers_.push_back(buffer(device_, swapchainImages[i], color_format_));
-			setupCmdBuffer.setImageLayout(
-				buffers_[i].image,
+		command_buffer cmdbuf(cmdpool);
+		cmdbuf.begin();
+
+		for (const buffer &buf : buffers_) {
+			cmdbuf.setImageLayout(
+				buf.image,
 				vk::ImageAspectFlagBits::eColor,
 				vk::ImageLayout::eUndefined,
-				static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+				vk::ImageLayout::ePresentSrcKHR);
 		}
 
-		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-		setupCmdBuffer.end();
-		setupCmdBuffer.submit(device);
-		device.wait_queue_idle();
+		cmdbuf.setImageLayout(
+			depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eDepthStencilAttachmentOptimal);
+		cmdbuf.end();
+		cmdbuf.submit(surface.parent_device());
+		surface.parent_device().wait_queue_idle();
 	}
 
 	swap_chain::~swap_chain()
@@ -123,11 +134,6 @@ namespace nif
 	{
 		buffers_.clear();
 		vk::destroySwapchainKHR(device_.handle(), handle_, nullptr);
-	}
-
-	uint32_t swap_chain::image_count() const
-	{
-		return image_count_;
 	}
 
 	const vector<swap_chain::buffer>& swap_chain::buffers() const

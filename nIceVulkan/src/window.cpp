@@ -57,7 +57,7 @@ namespace nif
 		hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
 		surface_(device, hinstance_, hwnd_),
 		cmdpool_(surface_),
-		swap_(device, surface_, cmdpool_)
+		swap_(surface_, cmdpool_)
 	{
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);

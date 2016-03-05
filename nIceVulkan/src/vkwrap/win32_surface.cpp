@@ -21,12 +21,13 @@ namespace nif
 		vk::PhysicalDevice physicalHandle = device.physical_device().handle();
 		const std::vector<vk::QueueFamilyProperties>& queueProps = device.physical_device().queue_props();
 
-		queue_node_index_ = set::from(queueProps)
-			.first_index([&](const vk::QueueFamilyProperties &x, uint32_t i) {
-				vk::Bool32 supportsPresent;
-				vk_try(vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent));
-				return x.queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent;
-			});
+		queue_node_index_ = static_cast<uint32_t>(
+			set::from(queueProps)
+				.first_index([&](const vk::QueueFamilyProperties &x, uint32_t i) {
+					vk::Bool32 supportsPresent;
+					vk_try(vk::getPhysicalDeviceSurfaceSupportKHR(physicalHandle, i, handle_, &supportsPresent));
+					return x.queueFlags() & vk::QueueFlagBits::eGraphics && supportsPresent;
+				}));
 
 		/////////
 

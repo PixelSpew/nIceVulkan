@@ -21,13 +21,13 @@ int main()
 	model sphere(device, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
 	std::vector<command_buffer> drawCmdBuffers;
-	for (uint32_t i = 0; i < win.swap_chain().image_count(); i++)
+	for (size_t i = 0; i < win.swap_chain().buffers().size(); i++)
 		drawCmdBuffers.push_back(command_buffer(win.command_pool()));
 
 	uint32_t swapWidth = win.swap_chain().width();
 	uint32_t swapHeight = win.swap_chain().height();
 	std::vector<framebuffer> framebuffers;
-	for (uint32_t i = 0; i < win.swap_chain().image_count(); i++)
+	for (size_t i = 0; i < win.swap_chain().buffers().size(); i++)
 		framebuffers.push_back(framebuffer(swapWidth, swapHeight, renderpass, { win.swap_chain().buffers()[i].view, win.swap_chain().depth_stencil_view() }));
 
 	vector<descriptor_set_layout> descriptorSetLayouts;
