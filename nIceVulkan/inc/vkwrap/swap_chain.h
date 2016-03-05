@@ -19,7 +19,6 @@ namespace nif
 		swap_chain(const device &device, const win32_surface &surface, const command_pool &cmdpool);
 		swap_chain(const swap_chain&) = delete;
 		~swap_chain();
-		void setup(command_buffer &cmdBuffer);
 		uint32_t acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const;
 		void queuePresent(const uint32_t currentBuffer) const;
 		void cleanup();

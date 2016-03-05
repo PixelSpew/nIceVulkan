@@ -92,17 +92,12 @@ namespace nif
 
 		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-		setup(setupCmdBuffer);
 		setupCmdBuffer.end();
 		setupCmdBuffer.submit(device);
 		device.wait_queue_idle();
 	}
 
 	swap_chain::~swap_chain()
-	{
-	}
-
-	void swap_chain::setup(command_buffer &cmdBuffer)
 	{
 	}
 
