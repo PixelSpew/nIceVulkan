@@ -52,13 +52,14 @@ namespace nif
 
 #define S window_static
 
-	window::window(const device &device)
-		: hinstance_(S::get_hinstance()),
-		  hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
-		  swap_(device, hinstance_, hwnd_),
-		  cmdpool_(swap_.surface()),
-		  depth_stencil_image_(width_, height_, device),	// todo: use vk_width_ and vk_height_
-		  depth_stencil_view_(depth_stencil_image_, device.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
+	window::window(const device &device) :
+		hinstance_(S::get_hinstance()),
+		hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
+		surface_(device, hinstance_, hwnd_),
+		swap_(device, surface_, hinstance_, hwnd_),
+		cmdpool_(swap_.surface()),
+		depth_stencil_image_(width_, height_, device),	// todo: use vk_width_ and vk_height_
+		depth_stencil_view_(depth_stencil_image_, device.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
 	{
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);
@@ -67,7 +68,7 @@ namespace nif
 
 		command_buffer setupCmdBuffer(cmdpool_);
 		setupCmdBuffer.begin();
-		swap_.setup(setupCmdBuffer, &vk_width_, &vk_height_);
+		swap_.setup(setupCmdBuffer);
 		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		setupCmdBuffer.end();
 		setupCmdBuffer.submit(device);
@@ -156,16 +157,6 @@ namespace nif
 	const image_view& window::depth_stencil_view() const
 	{
 		return depth_stencil_view_;
-	}
-
-	uint32_t window::vk_width() const
-	{
-		return vk_width_;
-	}
-
-	uint32_t window::vk_height() const
-	{
-		return vk_height_;
 	}
 
 	const swap_chain& window::vk_swap_chain() const

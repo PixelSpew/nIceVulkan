@@ -20,11 +20,13 @@ namespace nif
 	{
 	}
 
-	swap_chain::swap_chain(const device &device, const HINSTANCE platformHandle, const HWND platformWindow) :
+	swap_chain::swap_chain(const device &device, const win32_surface &surface, const HINSTANCE platformHandle, const HWND platformWindow) :
 		device_(device),
-		surface_(device, platformHandle, platformWindow)
+		surface_(surface),
+		width_(surface.capabilities().currentExtent().width()),
+		height_(surface.capabilities().currentExtent().height())
 	{
-		auto &formats = surface_.formats();
+		auto &formats = surface.formats();
 		color_format_ = formats.size() == 1 && formats[0].format() == vk::Format::eUndefined ?
 			vk::Format::eB8G8R8A8Unorm :
 			formats[0].format();
@@ -35,19 +37,8 @@ namespace nif
 	{
 	}
 
-	void swap_chain::setup(command_buffer &cmdBuffer, uint32_t *width, uint32_t *height)
+	void swap_chain::setup(command_buffer &cmdBuffer)
 	{
-		const vk::SurfaceCapabilitiesKHR& surfCaps = surface_.capabilities();
-		vk::Extent2D swapchainExtent;
-		if (surfCaps.currentExtent().width() == -1) {
-			swapchainExtent.width(*width);
-			swapchainExtent.height(*height);
-		} else {
-			swapchainExtent = surfCaps.currentExtent();
-			*width = surfCaps.currentExtent().width();
-			*height = surfCaps.currentExtent().height();
-		}
-
 		map<vk::PresentModeKHR, int> prefModes = {
 			{ vk::PresentModeKHR::eVkPresentModeMailboxKhr, 3 },
 			{ vk::PresentModeKHR::eVkPresentModeImmediateKhr, 2 },
@@ -58,9 +49,10 @@ namespace nif
 			.order_by([&](const vk::PresentModeKHR x) { return prefModes[x]; })
 			.last();
 
-		uint32_t imageCount = surfCaps.minImageCount() + 1;
-		if (surfCaps.maxImageCount() > 0 && imageCount > surfCaps.maxImageCount())
-			imageCount = surfCaps.maxImageCount();
+		const vk::SurfaceCapabilitiesKHR& surfCaps = surface_.capabilities();
+		uint32_t imageCount = surfCaps.minImageCount() == surfCaps.maxImageCount() ?
+			surfCaps.maxImageCount() :
+			surfCaps.minImageCount() + 1;
 
 		vk::SurfaceTransformFlagBitsKHR preTransform;
 		if (surfCaps.supportedTransforms() & vk::SurfaceTransformFlagBitsKHR::eIdentity)
@@ -73,7 +65,7 @@ namespace nif
 		swapchainCI.minImageCount(imageCount);
 		swapchainCI.imageFormat(color_format_);
 		swapchainCI.imageColorSpace(color_space_);
-		swapchainCI.imageExtent(vk::Extent2D(swapchainExtent.width(), swapchainExtent.height()));
+		swapchainCI.imageExtent(vk::Extent2D(width_, height_));
 		swapchainCI.imageUsage(vk::ImageUsageFlagBits::eColorAttachment);
 		swapchainCI.preTransform(preTransform);
 		swapchainCI.imageArrayLayers(1);
@@ -143,5 +135,15 @@ namespace nif
 	const device& swap_chain::parent_device() const
 	{
 		return device_;
+	}
+
+	uint32_t swap_chain::width() const
+	{
+		return width_;
+	}
+
+	uint32_t swap_chain::height() const
+	{
+		return height_;
 	}
 }

@@ -25,8 +25,6 @@ namespace nif
 		const HINSTANCE hinstance() const;
 		const command_pool& vk_command_pool() const;
 		const image_view& depth_stencil_view() const;
-		uint32_t vk_width() const;
-		uint32_t vk_height() const;
 		const swap_chain& vk_swap_chain() const;
 		int width() const;
 		int height() const;
@@ -36,10 +34,9 @@ namespace nif
 
 		int width_ = 1440;
 		int height_ = 810;
-		uint32_t vk_width_ = 1440;
-		uint32_t vk_height_ = 810;
 		HINSTANCE hinstance_;
 		HWND hwnd_;
+		win32_surface surface_;
 		swap_chain swap_;
 		command_pool cmdpool_;
 		image depth_stencil_image_;

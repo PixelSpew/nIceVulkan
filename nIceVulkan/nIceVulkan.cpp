@@ -24,9 +24,11 @@ int main()
 	for (uint32_t i = 0; i < win.vk_swap_chain().image_count(); i++)
 		drawCmdBuffers.push_back(command_buffer(win.vk_command_pool()));
 
+	uint32_t swapWidth = win.vk_swap_chain().width();
+	uint32_t swapHeight = win.vk_swap_chain().height();
 	std::vector<framebuffer> framebuffers;
 	for (uint32_t i = 0; i < win.vk_swap_chain().image_count(); i++)
-		framebuffers.push_back(framebuffer(win.vk_width(), win.vk_height(), renderpass, { win.vk_swap_chain().buffers()[i].view, win.depth_stencil_view() }));
+		framebuffers.push_back(framebuffer(swapWidth, swapHeight, renderpass, { win.vk_swap_chain().buffers()[i].view, win.depth_stencil_view() }));
 
 	vector<descriptor_set_layout> descriptorSetLayouts;
 	descriptorSetLayouts.push_back(descriptor_set_layout(device));
@@ -40,7 +42,7 @@ int main()
 		mat4 viewMatrix;
 	} uboVS;
 
-	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(win.vk_width()), static_cast<float>(win.vk_height()), 0.1f, 256.0f);
+	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(swapWidth), static_cast<float>(swapHeight), 0.1f, 256.0f);
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
@@ -57,9 +59,9 @@ int main()
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
 		drawCmdBuffers[i].begin();
-		drawCmdBuffers[i].begin_render_pass(renderpass, framebuffers[i], win.vk_width(), win.vk_height());
-		drawCmdBuffers[i].set_viewport(static_cast<float>(win.vk_width()), static_cast<float>(win.vk_height()));
-		drawCmdBuffers[i].set_scissor(0, 0, win.vk_width(), win.vk_height());
+		drawCmdBuffers[i].begin_render_pass(renderpass, framebuffers[i], swapWidth, swapHeight);
+		drawCmdBuffers[i].set_viewport(static_cast<float>(swapWidth), static_cast<float>(swapHeight));
+		drawCmdBuffers[i].set_scissor(0, 0, swapWidth, swapHeight);
 		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
 		drawCmdBuffers[i].bind_pipeline(solidPipeline);
 		drawCmdBuffers[i].bind_vertex_buffer(sphere.meshes()[0].vertex_buffer());
