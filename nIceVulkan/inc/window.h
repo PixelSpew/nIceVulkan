@@ -23,9 +23,8 @@ namespace nif
 
 		const HWND hwnd() const;
 		const HINSTANCE hinstance() const;
-		const command_pool& vk_command_pool() const;
-		const image_view& depth_stencil_view() const;
-		const swap_chain& vk_swap_chain() const;
+		const command_pool& command_pool() const;
+		const swap_chain& swap_chain() const;
 		int width() const;
 		int height() const;
 
@@ -37,10 +36,8 @@ namespace nif
 		HINSTANCE hinstance_;
 		HWND hwnd_;
 		win32_surface surface_;
-		swap_chain swap_;
-		command_pool cmdpool_;
-		image depth_stencil_image_;
-		image_view depth_stencil_view_;
+		nif::swap_chain swap_;
+		nif::command_pool cmdpool_;
 		keyboard keyboard_;
 		mouse mouse_;
 		timeevent update_;

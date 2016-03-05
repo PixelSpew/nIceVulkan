@@ -57,9 +57,7 @@ namespace nif
 		hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
 		surface_(device, hinstance_, hwnd_),
 		swap_(device, surface_, hinstance_, hwnd_),
-		cmdpool_(swap_.surface()),
-		depth_stencil_image_(width_, height_, device),	// todo: use vk_width_ and vk_height_
-		depth_stencil_view_(depth_stencil_image_, device.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
+		cmdpool_(surface_)
 	{
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);
@@ -69,7 +67,6 @@ namespace nif
 		command_buffer setupCmdBuffer(cmdpool_);
 		setupCmdBuffer.begin();
 		swap_.setup(setupCmdBuffer);
-		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		setupCmdBuffer.end();
 		setupCmdBuffer.submit(device);
 		device.wait_queue_idle();
@@ -149,17 +146,12 @@ namespace nif
 		return hinstance_;
 	}
 
-	const command_pool& window::vk_command_pool() const
+	const command_pool& window::command_pool() const
 	{
 		return cmdpool_;
 	}
 
-	const image_view& window::depth_stencil_view() const
-	{
-		return depth_stencil_view_;
-	}
-
-	const swap_chain& window::vk_swap_chain() const
+	const swap_chain& window::swap_chain() const
 	{
 		return swap_;
 	}

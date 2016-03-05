@@ -24,13 +24,13 @@ namespace nif
 		void queuePresent(const uint32_t currentBuffer) const;
 		void cleanup();
 
-		const win32_surface& surface() const;
 		uint32_t image_count() const;
 		const std::vector<buffer>& buffers() const;
 		const device& parent_device() const;
 
 		uint32_t width() const;
 		uint32_t height() const;
+		const image_view& depth_stencil_view() const;
 
 	private:
 		vk::Format color_format_;
@@ -44,5 +44,7 @@ namespace nif
 		const win32_surface &surface_;
 		uint32_t width_;
 		uint32_t height_;
+		image depth_stencil_image_;
+		image_view depth_stencil_view_;
 	};
 }

@@ -24,7 +24,9 @@ namespace nif
 		device_(device),
 		surface_(surface),
 		width_(surface.capabilities().currentExtent().width()),
-		height_(surface.capabilities().currentExtent().height())
+		height_(surface.capabilities().currentExtent().height()),
+		depth_stencil_image_(width_, height_, device),
+		depth_stencil_view_(depth_stencil_image_, device.depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
 	{
 		auto &formats = surface.formats();
 		color_format_ = formats.size() == 1 && formats[0].format() == vk::Format::eUndefined ?
@@ -91,6 +93,8 @@ namespace nif
 				vk::ImageLayout::eUndefined,
 				static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
 		}
+
+		cmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 	}
 
 	uint32_t swap_chain::acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const
@@ -117,11 +121,6 @@ namespace nif
 		vk::destroySwapchainKHR(device_.handle(), handle_, nullptr);
 	}
 
-	const win32_surface& swap_chain::surface() const
-	{
-		return surface_;
-	}
-
 	uint32_t swap_chain::image_count() const
 	{
 		return image_count_;
@@ -145,5 +144,10 @@ namespace nif
 	uint32_t swap_chain::height() const
 	{
 		return height_;
+	}
+
+	const image_view& swap_chain::depth_stencil_view() const
+	{
+		return depth_stencil_view_;
 	}
 }
