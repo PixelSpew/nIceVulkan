@@ -28,6 +28,7 @@ namespace nif
 		uint32_t height() const;
 		const image_view& depth_stencil_view() const;
 		const std::vector<buffer>& buffers() const;
+		const std::vector<framebuffer>& framebuffers() const;
 
 	private:
 		vk::SwapchainKHR handle_;
@@ -37,6 +38,8 @@ namespace nif
 		uint32_t height_;
 		image depth_stencil_image_;
 		image_view depth_stencil_view_;
+		render_pass renderpass_;
 		std::vector<buffer> buffers_;
+		std::vector<framebuffer> framebuffers_;
 	};
 }

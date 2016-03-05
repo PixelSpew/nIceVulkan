@@ -61,7 +61,8 @@ namespace nif
 		width_(surface.capabilities().currentExtent().width()),
 		height_(surface.capabilities().currentExtent().height()),
 		depth_stencil_image_(width_, height_, surface.parent_device()),
-		depth_stencil_view_(depth_stencil_image_, surface.parent_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
+		depth_stencil_view_(depth_stencil_image_, surface.parent_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil),
+		renderpass_(surface.parent_device())
 	{
 		vk::SwapchainCreateInfoKHR swapchainCI(
 			0,
@@ -106,6 +107,10 @@ namespace nif
 		cmdbuf.end();
 		cmdbuf.submit(surface.parent_device());
 		surface.parent_device().wait_queue_idle();
+
+		framebuffers_ = set::from(buffers_)
+			.select([&](const buffer &buf) { return framebuffer(width_, height_, renderpass_, { buf.view, depth_stencil_view_ }); })
+			.to_vector();
 	}
 
 	swap_chain::~swap_chain()
@@ -139,6 +144,11 @@ namespace nif
 	const vector<swap_chain::buffer>& swap_chain::buffers() const
 	{
 		return buffers_;
+	}
+
+	const std::vector<framebuffer>& swap_chain::framebuffers() const
+	{
+		return framebuffers_;
 	}
 
 	const device& swap_chain::parent_device() const

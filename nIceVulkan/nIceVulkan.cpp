@@ -15,37 +15,27 @@ int main()
 {
 	instance instance("nIce Framework");
 	device device(instance);
-	window win(device);
+	window wnd(device);
 	render_pass renderpass(device);
 
 	model sphere(device, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
-	std::vector<command_buffer> drawCmdBuffers;
-	for (size_t i = 0; i < win.swap_chain().buffers().size(); i++)
-		drawCmdBuffers.push_back(command_buffer(win.command_pool()));
-
-	uint32_t swapWidth = win.swap_chain().width();
-	uint32_t swapHeight = win.swap_chain().height();
-	std::vector<framebuffer> framebuffers;
-	for (size_t i = 0; i < win.swap_chain().buffers().size(); i++)
-		framebuffers.push_back(framebuffer(swapWidth, swapHeight, renderpass, { win.swap_chain().buffers()[i].view, win.swap_chain().depth_stencil_view() }));
-
-	vector<descriptor_set_layout> descriptorSetLayouts;
-	descriptorSetLayouts.push_back(descriptor_set_layout(device));
-	pipeline_layout pipelineLayout(descriptorSetLayouts);
-	descriptor_pool descriptorPool(device);
-
-	//prepare uniform buffers
-	struct ubo_type {
+	struct ubo_type
+	{
 		mat4 projectionMatrix;
 		mat4 modelMatrix;
 		mat4 viewMatrix;
 	} uboVS;
 
+	uint32_t swapWidth = wnd.swap_chain().width();
+	uint32_t swapHeight = wnd.swap_chain().height();
 	uboVS.projectionMatrix = mat4::perspective_fov(.9f, static_cast<float>(swapWidth), static_cast<float>(swapHeight), 0.1f, 256.0f);
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
+	vector<descriptor_set_layout> descriptorSetLayouts;
+	descriptorSetLayouts.push_back(descriptor_set_layout(device));
+	descriptor_pool descriptorPool(device);
 	buffer<ubo_type> uboBuffer(device, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
 	descriptor_set descriptorSet(descriptorSetLayouts, descriptorPool, uboBuffer);
 
@@ -53,13 +43,18 @@ int main()
 	shaderModules.push_back(shader_module(device, file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
 	shaderModules.push_back(shader_module(device, file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
 
+	pipeline_layout pipelineLayout(descriptorSetLayouts);
 	pipeline_cache pipelineCache(device);
 	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, model::vertex::pipeline_info(), pipelineCache);
+
+	std::vector<command_buffer> drawCmdBuffers;
+	for (size_t i = 0; i < wnd.swap_chain().buffers().size(); i++)
+		drawCmdBuffers.push_back(command_buffer(wnd.command_pool()));
 
 	for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 	{
 		drawCmdBuffers[i].begin();
-		drawCmdBuffers[i].begin_render_pass(renderpass, framebuffers[i], swapWidth, swapHeight);
+		drawCmdBuffers[i].begin_render_pass(renderpass, wnd.swap_chain().framebuffers()[i], swapWidth, swapHeight);
 		drawCmdBuffers[i].set_viewport(static_cast<float>(swapWidth), static_cast<float>(swapHeight));
 		drawCmdBuffers[i].set_scissor(0, 0, swapWidth, swapHeight);
 		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
@@ -68,35 +63,35 @@ int main()
 		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
 		drawCmdBuffers[i].draw_indexed(sphere.meshes()[0].index_count());
 		drawCmdBuffers[i].end_render_pass();
-		drawCmdBuffers[i].pipeline_barrier(win.swap_chain().buffers()[i].image);
+		drawCmdBuffers[i].pipeline_barrier(wnd.swap_chain().buffers()[i].image);
 		drawCmdBuffers[i].end();
 	}
 
 	/////////
 
 	uint32_t currentBuffer = 0;
-	command_buffer postPresentCmdBuffer(win.command_pool());
+	command_buffer postPresentCmdBuffer(wnd.command_pool());
 
-	win.keyhit(keys::escape).add([&]() {
-		win.close();
+	wnd.keyhit(keys::escape).add([&]() {
+		wnd.close();
 	});
 
-	win.buttonhit(buttons::left).add([&]() {
-		win.close();
+	wnd.buttonhit(buttons::left).add([&]() {
+		wnd.close();
 	});
 
-	win.draw().add([&](double delta) {
+	wnd.draw().add([&](double delta) {
 		device.wait_queue_idle();
 
 		semaphore presentCompleteSemaphore(device);
-		currentBuffer = win.swap_chain().acquireNextImage(presentCompleteSemaphore, currentBuffer);
+		currentBuffer = wnd.swap_chain().acquireNextImage(presentCompleteSemaphore, currentBuffer);
 		drawCmdBuffers[currentBuffer].submit(device);
-		win.swap_chain().queuePresent(currentBuffer);
+		wnd.swap_chain().queuePresent(currentBuffer);
 
 		postPresentCmdBuffer.begin();
-		postPresentCmdBuffer.pipeline_barrier(win.swap_chain().buffers()[currentBuffer].image);
+		postPresentCmdBuffer.pipeline_barrier(wnd.swap_chain().buffers()[currentBuffer].image);
 		postPresentCmdBuffer.end();
 		postPresentCmdBuffer.submit(device);
 	});
-	win.run(60);
+	wnd.run(60);
 }
