@@ -36,8 +36,8 @@ namespace nif
 		HINSTANCE hinstance_;
 		HWND hwnd_;
 		win32_surface surface_;
-		nif::swap_chain swap_;
 		nif::command_pool cmdpool_;
+		nif::swap_chain swap_;
 		keyboard keyboard_;
 		mouse mouse_;
 		timeevent update_;

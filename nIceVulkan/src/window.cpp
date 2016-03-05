@@ -56,20 +56,13 @@ namespace nif
 		hinstance_(S::get_hinstance()),
 		hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
 		surface_(device, hinstance_, hwnd_),
-		swap_(device, surface_, hinstance_, hwnd_),
-		cmdpool_(surface_)
+		cmdpool_(surface_),
+		swap_(device, surface_, cmdpool_)
 	{
 		ShowWindow(hwnd_, SW_SHOW);
 		UpdateWindow(hwnd_);
 
 		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
-
-		command_buffer setupCmdBuffer(cmdpool_);
-		setupCmdBuffer.begin();
-		swap_.setup(setupCmdBuffer);
-		setupCmdBuffer.end();
-		setupCmdBuffer.submit(device);
-		device.wait_queue_idle();
 	}
 
 	window::~window()

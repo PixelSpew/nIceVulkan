@@ -16,7 +16,7 @@ namespace nif
 		};
 
 	public:
-		swap_chain(const device &device, const win32_surface &surface, const HINSTANCE platformHandle, const HWND platformWindow);
+		swap_chain(const device &device, const win32_surface &surface, const command_pool &cmdpool);
 		swap_chain(const swap_chain&) = delete;
 		~swap_chain();
 		void setup(command_buffer &cmdBuffer);

@@ -20,7 +20,7 @@ namespace nif
 	{
 	}
 
-	swap_chain::swap_chain(const device &device, const win32_surface &surface, const HINSTANCE platformHandle, const HWND platformWindow) :
+	swap_chain::swap_chain(const device &device, const win32_surface &surface, const command_pool &cmdpool) :
 		device_(device),
 		surface_(surface),
 		width_(surface.capabilities().currentExtent().width()),
@@ -33,14 +33,7 @@ namespace nif
 			vk::Format::eB8G8R8A8Unorm :
 			formats[0].format();
 		color_space_ = formats[0].colorSpace();
-	}
 
-	swap_chain::~swap_chain()
-	{
-	}
-
-	void swap_chain::setup(command_buffer &cmdBuffer)
-	{
 		map<vk::PresentModeKHR, int> prefModes = {
 			{ vk::PresentModeKHR::eVkPresentModeMailboxKhr, 3 },
 			{ vk::PresentModeKHR::eVkPresentModeImmediateKhr, 2 },
@@ -84,17 +77,33 @@ namespace nif
 		vector<vk::Image> swapchainImages(image_count_);
 		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &image_count_, swapchainImages.data()));
 
+		command_buffer setupCmdBuffer(cmdpool);
+		setupCmdBuffer.begin();
+
 		buffers_.reserve(image_count_);
 		for (uint32_t i = 0; i < image_count_; i++) {
 			buffers_.push_back(buffer(device_, swapchainImages[i], color_format_));
-			cmdBuffer.setImageLayout(
+			setupCmdBuffer.setImageLayout(
 				buffers_[i].image,
 				vk::ImageAspectFlagBits::eColor,
 				vk::ImageLayout::eUndefined,
 				static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
 		}
 
-		cmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+		setupCmdBuffer.setImageLayout(depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+		setup(setupCmdBuffer);
+		setupCmdBuffer.end();
+		setupCmdBuffer.submit(device);
+		device.wait_queue_idle();
+	}
+
+	swap_chain::~swap_chain()
+	{
+	}
+
+	void swap_chain::setup(command_buffer &cmdBuffer)
+	{
 	}
 
 	uint32_t swap_chain::acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const
