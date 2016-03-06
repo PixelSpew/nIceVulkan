@@ -31,6 +31,8 @@ namespace nif
 	class vertex_description<T>
 	{
 	public:
+		vertex_description() = delete;
+
 		static const attrib_descriptions attrib_descs_copy()
 		{
 			return attrib_descriptions();
@@ -41,6 +43,8 @@ namespace nif
 	class vertex_description<T, This, Rest...>
 	{
 	public:
+		vertex_description() = delete;
+
 		static const vk::PipelineVertexInputStateCreateInfo& value()
 		{
 			static const vk::PipelineVertexInputStateCreateInfo ret(
