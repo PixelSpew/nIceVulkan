@@ -6,22 +6,10 @@
 using namespace std;
 using namespace tinyobj;
 
-namespace nif {
-	const vk::PipelineVertexInputStateCreateInfo& model::vertex::pipeline_info() {
-		static const vector<vk::VertexInputBindingDescription> bindDescs = {
-			vk::VertexInputBindingDescription(0, sizeof(vertex), vk::VertexInputRate::eVertex)
-		};
-
-		static const vector<vk::VertexInputAttributeDescription> attribDescs = {
-			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, 0)
-		};
-
-		static const vk::PipelineVertexInputStateCreateInfo pipelineInfo(0, 1, bindDescs.data(), 1, attribDescs.data());
-
-		return pipelineInfo;
-	}
-
-	model::model(const device &device, const std::string &filename) {
+namespace nif
+{
+	model::model(const device &device, const std::string &filename)
+	{
 		vector<shape_t> shapes;
 		vector<material_t> materials;
 
@@ -43,7 +31,8 @@ namespace nif {
 		meshes_.push_back(mesh<vertex>(device, vertices, indices));
 	}
 
-	const std::vector<mesh<model::vertex>>& model::meshes() const {
+	const std::vector<mesh<model::vertex>>& model::meshes() const
+	{
 		return meshes_;
 	}
 }

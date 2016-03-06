@@ -10,7 +10,7 @@ namespace nif
 		const pipeline_cache& cache,
 		const std::string &vertsrc,
 		const std::string &fragsrc,
-		vk::PipelineVertexInputStateCreateInfo vertinfo)
+		const vk::PipelineVertexInputStateCreateInfo &vertinfo)
 	{
 		modules_.push_back(shader_module(pass.parent_device(), vertsrc, vk::ShaderStageFlagBits::eVertex));
 		modules_.push_back(shader_module(pass.parent_device(), fragsrc, vk::ShaderStageFlagBits::eFragment));
@@ -24,7 +24,7 @@ namespace nif
 	{
 	}
 
-	const pipeline_layout & shader::pipeline_layout() const
+	const pipeline_layout& shader::pipeline_layout() const
 	{
 		return pipeline_layout_;
 	}

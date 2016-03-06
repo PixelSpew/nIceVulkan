@@ -1,14 +1,18 @@
 #pragma once
 #include "mesh.h"
 #include "math/vec3.h"
+#include "vertex_description.h"
 
-namespace nif {
-	class model {
+namespace nif
+{
+	class model
+	{
 	public:
-		struct vertex {
+		struct vertex
+		{
 			vec3 pos;
 
-			static const vk::PipelineVertexInputStateCreateInfo& pipeline_info();
+			using description = vertex_description<vertex, vec3>;
 		};
 
 		model(const device &device, const std::string &filename);

@@ -40,7 +40,7 @@ int main()
 		cache,
 		file::read_all_text("res/triangle.vert.spv"),
 		file::read_all_text("res/triangle.frag.spv"),
-		model::vertex::pipeline_info());
+		model::vertex::description::value());
 
 	descriptor_pool descriptorPool(device);
 	buffer<ubo_type> uboBuffer(device, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));

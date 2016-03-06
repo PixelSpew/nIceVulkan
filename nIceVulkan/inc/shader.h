@@ -11,7 +11,7 @@ namespace nif
 			const pipeline_cache &cache,
 			const std::string &vertsrc,
 			const std::string &fragsrc,
-			vk::PipelineVertexInputStateCreateInfo vertinfo);
+			const vk::PipelineVertexInputStateCreateInfo &vertinfo);
 		~shader();
 
 		const std::vector<shader_module>& modules() const;

@@ -15,7 +15,7 @@ namespace nif
 			const pipeline_layout &layout,
 			const render_pass &pass,
 			const std::vector<shader_module> &shaderModules,
-			const vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo,
+			const vk::PipelineVertexInputStateCreateInfo &vertexInputStateCreateInfo,
 			const pipeline_cache &cache);
 		pipeline(const pipeline&) = delete;
 		pipeline(pipeline &&old);
