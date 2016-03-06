@@ -6,8 +6,9 @@ using namespace std;
 
 namespace nif
 {
-	shader_module::shader_module(const device &device, const string &source, const vk::ShaderStageFlagBits stage)
-		: device_(device), stage_(stage)
+	shader_module::shader_module(const device &device, const string &source, const vk::ShaderStageFlagBits stage) :
+		device_(device),
+		stage_(stage)
 	{
 		vk::ShaderModuleCreateInfo moduleCreateInfo;
 		moduleCreateInfo.codeSize(source.size());
@@ -16,8 +17,10 @@ namespace nif
 		vk_try(vk::createShaderModule(device.handle(), &moduleCreateInfo, nullptr, &handle_));
 	}
 
-	shader_module::shader_module(shader_module &&old)
-		: handle_(old.handle_), device_(move(old.device_)), stage_(old.stage_)
+	shader_module::shader_module(shader_module &&old) :
+		handle_(old.handle_),
+		device_(move(old.device_)),
+		stage_(old.stage_)
 	{
 		old.handle_ = nullptr;
 	}

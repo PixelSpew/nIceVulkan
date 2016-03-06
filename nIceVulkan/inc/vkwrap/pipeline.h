@@ -10,6 +10,7 @@ namespace nif
 	class pipeline
 	{
 	public:
+		pipeline();
 		pipeline(
 			const pipeline_layout &layout,
 			const render_pass &pass,
@@ -17,11 +18,14 @@ namespace nif
 			const vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo,
 			const pipeline_cache &cache);
 		pipeline(const pipeline&) = delete;
+		pipeline(pipeline &&old);
 		~pipeline();
 		vk::Pipeline handle() const;
 
+		pipeline& operator=(pipeline &&rhs);
+
 	private:
 		vk::Pipeline handle_;
-		const device &device_;
+		const device *device_;
 	};
 }

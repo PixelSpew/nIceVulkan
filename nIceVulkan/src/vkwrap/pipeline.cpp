@@ -7,13 +7,17 @@ using namespace std;
 
 namespace nif
 {
+	pipeline::pipeline()
+	{
+	}
+
 	pipeline::pipeline(
 		const pipeline_layout &layout,
 		const render_pass &pass,
 		const std::vector<shader_module> &shaderModules,
 		const vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo,
 		const pipeline_cache &cache) :
-		device_(pass.parent_device())
+		device_(&pass.parent_device())
 	{
 		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;
 		inputAssemblyState.topology(vk::PrimitiveTopology::eTriangleList);
@@ -81,13 +85,32 @@ namespace nif
 		vk_try(vk::createGraphicsPipelines(pass.parent_device().handle(), cache.handle(), 1, &pipelineCreateInfo, nullptr, &handle_));
 	}
 
+	pipeline::pipeline(pipeline &&old) :
+		handle_(old.handle_),
+		device_(old.device_)
+	{
+		old.handle_ = nullptr;
+	}
+
 	pipeline::~pipeline()
 	{
-		vk::destroyPipeline(device_.handle(), handle_, nullptr);
+		if (handle_)
+			vk::destroyPipeline(device_->handle(), handle_, nullptr);
 	}
 
 	vk::Pipeline pipeline::handle() const
 	{
 		return handle_;
+	}
+
+	pipeline& pipeline::operator=(pipeline && rhs)
+	{
+		if (handle_ != rhs.handle_) {
+			handle_ = rhs.handle_;
+			device_ = rhs.device_;
+			rhs.handle_ = nullptr;
+		}
+
+		return *this;
 	}
 }

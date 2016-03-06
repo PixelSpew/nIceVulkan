@@ -4,6 +4,7 @@
 #include "util/file.h"
 #include "vkwrap/swap_chain.h"
 #include "model.h"
+#include "shader.h"
 #include "tiny_obj_loader.h"
 #include <iostream>
 
@@ -16,7 +17,6 @@ int main()
 	instance instance("nIce Framework");
 	device device(instance);
 	window wnd(device);
-	render_pass renderpass(device);
 
 	model sphere(device, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
 
@@ -33,19 +33,18 @@ int main()
 	uboVS.viewMatrix = mat4::translation(vec3(0.0f, 0.0f, -2.5f));
 	uboVS.modelMatrix = mat4::identity();
 
-	vector<descriptor_set_layout> descriptorSetLayouts;
-	descriptorSetLayouts.push_back(descriptor_set_layout(device));
+	render_pass renderpass(device);
+	pipeline_cache cache(device);
+	shader shader(
+		renderpass,
+		cache,
+		file::read_all_text("res/triangle.vert.spv"),
+		file::read_all_text("res/triangle.frag.spv"),
+		model::vertex::pipeline_info());
+
 	descriptor_pool descriptorPool(device);
 	buffer<ubo_type> uboBuffer(device, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
-	descriptor_set descriptorSet(descriptorSetLayouts, descriptorPool, uboBuffer);
-
-	vector<shader_module> shaderModules;
-	shaderModules.push_back(shader_module(device, file::read_all_text("res/triangle.vert.spv"), vk::ShaderStageFlagBits::eVertex));
-	shaderModules.push_back(shader_module(device, file::read_all_text("res/triangle.frag.spv"), vk::ShaderStageFlagBits::eFragment));
-
-	pipeline_layout pipelineLayout(descriptorSetLayouts);
-	pipeline_cache pipelineCache(device);
-	pipeline solidPipeline(pipelineLayout, renderpass, shaderModules, model::vertex::pipeline_info(), pipelineCache);
+	descriptor_set descriptorSet(shader.descriptor_set_layouts(), descriptorPool, uboBuffer);
 
 	std::vector<command_buffer> drawCmdBuffers;
 	for (size_t i = 0; i < wnd.swap_chain().buffers().size(); i++)
@@ -57,8 +56,8 @@ int main()
 		drawCmdBuffers[i].begin_render_pass(renderpass, wnd.swap_chain().framebuffers()[i], swapWidth, swapHeight);
 		drawCmdBuffers[i].set_viewport(static_cast<float>(swapWidth), static_cast<float>(swapHeight));
 		drawCmdBuffers[i].set_scissor(0, 0, swapWidth, swapHeight);
-		drawCmdBuffers[i].bind_descriptor_sets(pipelineLayout, descriptorSet);
-		drawCmdBuffers[i].bind_pipeline(solidPipeline);
+		drawCmdBuffers[i].bind_descriptor_sets(shader.pipeline_layout(), descriptorSet);
+		drawCmdBuffers[i].bind_pipeline(shader.pipeline());
 		drawCmdBuffers[i].bind_vertex_buffer(sphere.meshes()[0].vertex_buffer());
 		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
 		drawCmdBuffers[i].draw_indexed(sphere.meshes()[0].index_count());

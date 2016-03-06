@@ -149,6 +149,7 @@
     <ClInclude Include="inc\mesh.h" />
     <ClInclude Include="inc\model.h" />
     <ClInclude Include="inc\mouse.h" />
+    <ClInclude Include="inc\shader.h" />
     <ClInclude Include="inc\util\dispatcher.h" />
     <ClInclude Include="inc\util\setops.h" />
     <ClInclude Include="inc\util\shortcuts.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\vkwrap\physical_device.cpp" />
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\mouse.cpp" />

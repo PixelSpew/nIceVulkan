@@ -150,6 +150,9 @@
     <ClInclude Include="inc\vkwrap\physical_device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -264,6 +267,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\vkwrap\physical_device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
