@@ -93,6 +93,7 @@ namespace nif
 					DispatchMessage(&msg);
 				}
 				keyboard_.update();
+				mouse_.update();
 
 				update_(updateRate);
 				lag -= updateRate;

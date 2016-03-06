@@ -68,17 +68,12 @@ int main()
 
 	/////////
 
-	uint32_t currentBuffer = 0;
-	command_buffer postPresentCmdBuffer(wnd.command_pool());
-
 	wnd.keyhit(keys::escape).add([&]() {
 		wnd.close();
 	});
 
-	wnd.buttonhit(buttons::left).add([&]() {
-		wnd.close();
-	});
-
+	uint32_t currentBuffer = 0;
+	command_buffer postPresentCmdBuffer(wnd.command_pool());
 	wnd.draw().add([&](double delta) {
 		device.wait_queue_idle();
 
