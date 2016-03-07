@@ -153,7 +153,7 @@
     <ClInclude Include="inc\util\dispatcher.h" />
     <ClInclude Include="inc\util\setops.h" />
     <ClInclude Include="inc\util\shortcuts.h" />
-    <ClInclude Include="inc\vertex_description.h" />
+    <ClInclude Include="inc\ivertex.h" />
     <ClInclude Include="inc\vkwrap\buffer.h" />
     <ClInclude Include="inc\vkwrap\command_buffer.h" />
     <ClInclude Include="inc\vkwrap\command_pool.h" />

@@ -8,6 +8,11 @@ using namespace tinyobj;
 
 namespace nif
 {
+	model::vertex::vertex(const vec3 &pos) :
+		pos(pos)
+	{
+	}
+
 	model::model(const device &device, const std::string &filename)
 	{
 		vector<shape_t> shapes;

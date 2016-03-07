@@ -1,18 +1,18 @@
 #pragma once
 #include "mesh.h"
 #include "math/vec3.h"
-#include "vertex_description.h"
+#include "ivertex.h"
 
 namespace nif
 {
 	class model
 	{
 	public:
-		struct vertex
+		struct vertex : ivertex<vertex, vec3>
 		{
-			vec3 pos;
+			vertex(const vec3 &pos);
 
-			using description = vertex_description<vertex, vec3>;
+			vec3 pos;
 		};
 
 		model(const device &device, const std::string &filename);

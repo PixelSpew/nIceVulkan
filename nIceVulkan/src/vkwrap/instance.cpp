@@ -9,7 +9,7 @@ using namespace std;
 
 namespace nif
 {
-	VkBool32 messageCallback(
+	vk::Bool32 messageCallback(
 		VkDebugReportFlagsEXT flags,
 		VkDebugReportObjectTypeEXT objType,
 		uint64_t srcObject,
@@ -65,9 +65,9 @@ namespace nif
 #ifdef _DEBUG
 		directory::create_directory("log");
 		file::write_all_text("log/log.txt", "");
-
-		PFN_vkCreateDebugReportCallbackEXT createDebugReport = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(handle_, "vkCreateDebugReportCallbackEXT");
-		destroy_debug_report_ = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(handle_, "vkDestroyDebugReportCallbackEXT");
+		
+		PFN_vkCreateDebugReportCallbackEXT createDebugReport = (PFN_vkCreateDebugReportCallbackEXT)vk::getInstanceProcAddr(handle_, "vkCreateDebugReportCallbackEXT");
+		destroy_debug_report_ = (PFN_vkDestroyDebugReportCallbackEXT)vk::getInstanceProcAddr(handle_, "vkDestroyDebugReportCallbackEXT");
 
 		VkDebugReportCallbackCreateInfoEXT dbgCreateInfo =
 			vk::DebugReportCallbackCreateInfoEXT(

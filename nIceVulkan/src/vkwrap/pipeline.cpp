@@ -23,36 +23,29 @@ namespace nif
 		inputAssemblyState.topology(vk::PrimitiveTopology::eTriangleList);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState;
-		rasterizationState.polygonMode(vk::PolygonMode::eFill);
-		rasterizationState.cullMode(vk::CullModeFlagBits::eNone);
-		rasterizationState.frontFace(vk::FrontFace::eCounterClockwise);
-		rasterizationState.depthClampEnable(VK_FALSE);
-		rasterizationState.rasterizerDiscardEnable(VK_FALSE);
-		rasterizationState.depthBiasEnable(VK_FALSE);
 
-		vk::PipelineColorBlendAttachmentState blendAttachmentState[1];
+		vector<vk::PipelineColorBlendAttachmentState> blendAttachmentState(1);
 		blendAttachmentState[0].colorWriteMask(static_cast<vk::ColorComponentFlagBits>(0xf));
-		blendAttachmentState[0].blendEnable(VK_FALSE);
 
 		vk::PipelineColorBlendStateCreateInfo colorBlendState;
-		colorBlendState.attachmentCount(1);
-		colorBlendState.pAttachments(blendAttachmentState);
+		colorBlendState.attachmentCount(static_cast<uint32_t>(blendAttachmentState.size()));
+		colorBlendState.pAttachments(blendAttachmentState.data());
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState;
-		multisampleState.rasterizationSamples(vk::SampleCountFlagBits::e1);
 
 		vk::PipelineViewportStateCreateInfo viewportState;
 		viewportState.viewportCount(1);
 		viewportState.scissorCount(1);
 
+		vk::StencilOpState stencilOpState;
+		stencilOpState.compareOp(vk::CompareOp::eAlways);
+
 		vk::PipelineDepthStencilStateCreateInfo depthStencilState;
 		depthStencilState.depthTestEnable(VK_TRUE);
 		depthStencilState.depthWriteEnable(VK_TRUE);
 		depthStencilState.depthCompareOp(vk::CompareOp::eLessOrEqual);
-		depthStencilState.depthBoundsTestEnable(VK_FALSE);
-		depthStencilState.back(vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0));
-		depthStencilState.stencilTestEnable(VK_FALSE);
-		depthStencilState.front(depthStencilState.back());
+		depthStencilState.back(stencilOpState);
+		depthStencilState.front(stencilOpState);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
