@@ -38,8 +38,8 @@ int main()
 	shader shader(
 		renderpass,
 		cache,
-		file::read_all_text("res/triangle.vert.spv"),
-		file::read_all_text("res/triangle.frag.spv"),
+		file::read_all_bytes("res/triangle.vert.spv"),
+		file::read_all_bytes("res/triangle.frag.spv"),
 		model::vertex::description());
 
 	descriptor_pool descriptorPool(device);

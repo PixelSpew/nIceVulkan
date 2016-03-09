@@ -23,6 +23,21 @@ namespace nif
 			return contents;
 		}
 
+		vector<char> read_all_bytes(const string & filename)
+		{
+			ifstream in(filename, ios::in | ios::binary);
+			if (!in)
+				throw errno;
+
+			vector<char> contents;
+			in.seekg(0, ios::end);
+			contents.resize(in.tellg());
+			in.seekg(0, ios::beg);
+			in.read(&contents[0], contents.size());
+			in.close();
+			return contents;
+		}
+
 		void write_all_text(const std::string &filename, const std::string &text)
 		{
 			ofstream out(filename, ios::out | ios::binary | ios::trunc);

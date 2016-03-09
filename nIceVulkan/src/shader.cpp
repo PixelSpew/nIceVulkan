@@ -8,8 +8,8 @@ namespace nif
 	shader::shader(
 		const render_pass &pass,
 		const pipeline_cache& cache,
-		const std::string &vertsrc,
-		const std::string &fragsrc,
+		const vector<char> &vertsrc,
+		const vector<char> &fragsrc,
 		const vk::PipelineVertexInputStateCreateInfo &vertinfo)
 	{
 		modules_.push_back(shader_module(pass.parent_device(), vertsrc, vk::ShaderStageFlagBits::eVertex));

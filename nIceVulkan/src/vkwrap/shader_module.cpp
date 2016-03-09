@@ -6,7 +6,7 @@ using namespace std;
 
 namespace nif
 {
-	shader_module::shader_module(const device &device, const string &source, const vk::ShaderStageFlagBits stage) :
+	shader_module::shader_module(const device &device, const vector<char> &source, const vk::ShaderStageFlagBits stage) :
 		device_(device),
 		stage_(stage)
 	{

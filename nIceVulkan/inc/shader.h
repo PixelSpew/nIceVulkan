@@ -9,8 +9,8 @@ namespace nif
 		shader(
 			const render_pass &pass,
 			const pipeline_cache &cache,
-			const std::string &vertsrc,
-			const std::string &fragsrc,
+			const std::vector<char> &vertsrc,
+			const std::vector<char> &fragsrc,
 			const vk::PipelineVertexInputStateCreateInfo &vertinfo);
 		~shader();
 

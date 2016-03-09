@@ -6,7 +6,7 @@ namespace nif
 	class shader_module
 	{
 	public:
-		shader_module(const device &device, const std::string &source, const vk::ShaderStageFlagBits stage);
+		shader_module(const device &device, const std::vector<char> &source, const vk::ShaderStageFlagBits stage);
 		shader_module(const shader_module&) = delete;
 		shader_module(shader_module &&old);
 		~shader_module();
