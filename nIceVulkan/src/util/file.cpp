@@ -23,7 +23,7 @@ namespace nif
 			return contents;
 		}
 
-		vector<char> read_all_bytes(const string & filename)
+		vector<char> read_all_bytes(const string &filename)
 		{
 			ifstream in(filename, ios::in | ios::binary);
 			if (!in)

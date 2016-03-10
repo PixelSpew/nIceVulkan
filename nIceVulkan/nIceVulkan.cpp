@@ -6,6 +6,7 @@
 #include "model.h"
 #include "shader.h"
 #include "tiny_obj_loader.h"
+#include "config.h"
 #include <iostream>
 
 using namespace std;
@@ -38,8 +39,8 @@ int main()
 	shader shader(
 		renderpass,
 		cache,
-		file::read_all_bytes("res/triangle.vert.spv"),
-		file::read_all_bytes("res/triangle.frag.spv"),
+		file::read_all_bytes(res_path() + "triangle.vert.spv"),
+		file::read_all_bytes(res_path() + "triangle.frag.spv"),
 		model::vertex::description());
 
 	descriptor_pool descriptorPool(device);

@@ -1,0 +1,10 @@
+#pragma once
+#include <string>
+
+namespace nif
+{
+	inline std::string res_path()
+	{
+		return "@RES_PATH@";
+	}
+}
