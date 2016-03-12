@@ -55,7 +55,7 @@ namespace nif
 	{
 	}
 
-	swap_chain::swap_chain(const win32_surface &surface, const command_pool &cmdpool) :
+	swap_chain::swap_chain(const surface_win32 &surface, const command_pool &cmdpool) :
 		device_(surface.parent_device()),
 		surface_(surface),
 		width_(surface.capabilities().currentExtent().width()),

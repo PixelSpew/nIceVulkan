@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "vkwrap/win32_surface.h"
+#include "vkwrap/surface_win32.h"
 #include "util/setops.h"
 #include "util/shortcuts.h"
 
@@ -7,8 +7,8 @@ using namespace std;
 
 namespace nif
 {
-	win32_surface::win32_surface(const device &device, const HINSTANCE platformHandle, const HWND platformWindow)
-		: device_(device)
+	surface_win32::surface_win32(const device &device, const HINSTANCE platformHandle, const HWND platformWindow) :
+		device_(device)
 	{
 		vk::Win32SurfaceCreateInfoKHR surfaceCreateInfo;
 		surfaceCreateInfo.hinstance(platformHandle);
@@ -18,8 +18,8 @@ namespace nif
 
 		//////////////
 
-		vk::PhysicalDevice physicalHandle = device.physical_device().handle();
-		const std::vector<vk::QueueFamilyProperties>& queueProps = device.physical_device().queue_props();
+		vk::PhysicalDevice physicalHandle = device.physdevice().handle();
+		const std::vector<vk::QueueFamilyProperties>& queueProps = device.physdevice().queue_props();
 
 		queue_node_index_ = static_cast<uint32_t>(
 			set::from(queueProps)
@@ -44,37 +44,37 @@ namespace nif
 		vk_try(vk::getPhysicalDeviceSurfaceFormatsKHR(physicalHandle, handle_, &formatCount, formats_.data()));
 	}
 
-	win32_surface::~win32_surface()
+	surface_win32::~surface_win32()
 	{
 		vk::destroySurfaceKHR(device_.parent_instance().handle(), handle_, nullptr);
 	}
 
-	vk::SurfaceKHR win32_surface::handle() const
+	vk::SurfaceKHR surface_win32::handle() const
 	{
 		return handle_;
 	}
 
-	const device& win32_surface::parent_device() const
+	const device& surface_win32::parent_device() const
 	{
 		return device_;
 	}
 
-	uint32_t win32_surface::queue_node_index() const
+	uint32_t surface_win32::queue_node_index() const
 	{
 		return queue_node_index_;
 	}
 
-	const vk::SurfaceCapabilitiesKHR& win32_surface::capabilities() const
+	const vk::SurfaceCapabilitiesKHR& surface_win32::capabilities() const
 	{
 		return capabilities_;
 	}
 
-	const vector<vk::PresentModeKHR>& win32_surface::present_modes() const
+	const vector<vk::PresentModeKHR>& surface_win32::present_modes() const
 	{
 		return present_modes_;
 	}
 
-	const std::vector<vk::SurfaceFormatKHR>& win32_surface::formats() const
+	const std::vector<vk::SurfaceFormatKHR>& surface_win32::formats() const
 	{
 		return formats_;
 	}

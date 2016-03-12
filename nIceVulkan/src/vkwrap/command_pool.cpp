@@ -6,7 +6,7 @@ using namespace std;
 
 namespace nif
 {
-	command_pool::command_pool(const win32_surface &surface) :
+	command_pool::command_pool(const surface_win32 &surface) :
 		device_(surface.parent_device())
 	{
 		vk::CommandPoolCreateInfo cmdPoolInfo;

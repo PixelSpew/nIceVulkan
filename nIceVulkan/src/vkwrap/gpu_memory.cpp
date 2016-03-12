@@ -19,7 +19,7 @@ namespace nif
 		vk::MemoryAllocateInfo mem_alloc;
 		mem_alloc.allocationSize(memreqs.size());
 
-		const vk::MemoryType *memoryTypes = device.physical_device().memory_properties().memoryTypes();
+		const vk::MemoryType *memoryTypes = device.physdevice().memory_properties().memoryTypes();
 		for (uint32_t i = 0; i < 32; i++) {
 			if (memreqs.memoryTypeBits() & 1 << i) {
 				if (memoryTypes[i].propertyFlags() & memtype) {

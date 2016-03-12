@@ -61,7 +61,7 @@ namespace set
 #pragma region macros
 
 #define FUNC_PARAM_COUNT(Func) function_traits<Func>::arity
-#define FUNC_ARG_TYPE(Func, Index) function_traits<Func>::arg<Index>::type
+#define FUNC_ARG_TYPE(Func, Index) function_traits<Func>::template arg<Index>::type
 #define FUNC_RET(Func) function_traits<Func>::result_type
 
 #define ITER_VAL(Iter) typename std::iterator_traits<Iter>::value_type
@@ -165,7 +165,7 @@ namespace set
 	{
 	public:
 		transform_iterator(InternalIter iter) :
-			base_iterator(iter)
+			base_iterator<Child, InternalIter, Ret, const Ret&, const Ret*, Diff, Ret>(iter)
 		{
 		}
 	};
@@ -177,21 +177,21 @@ namespace set
 	{
 	public:
 		where_iterator(const InternalIter &iter, const InternalIter &end, const Func &filter) :
-			base_iterator(iter),
+			base_iterator<where_iterator<InternalIter, Func>, InternalIter>(iter),
 			end_(end),
 			filter_(filter)
 		{
-			while (iter_ != end_ && !filter_(*iter_)) {
-				++iter_;
+			while (this->iter_ != end_ && !filter_(*this->iter_)) {
+				++this->iter_;
 			}
-			begin_ = iter_;
+			begin_ = this->iter_;
 		}
 
 		where_iterator& operator++() override
 		{
 			do {
-				++iter_;
-			} while (iter_ != end_ && !filter_(*iter_));
+				++this->iter_;
+			} while (this->iter_ != end_ && !filter_(*this->iter_));
 			return *this;
 		}
 
@@ -205,8 +205,8 @@ namespace set
 		where_iterator& operator--() override
 		{
 			do {
-				--iter_;
-			} while (iter_ != begin_ && !filter_(*iter_));
+				--this->iter_;
+			} while (this->iter_ != begin_ && !filter_(*this->iter_));
 			return *this;
 		}
 
@@ -229,8 +229,10 @@ namespace set
 		typename FUNC_RET(Func)>
 	{
 	public:
+		using value_type = typename FUNC_RET(Func);
+
 		select_iterator(const InternalIter &iter, const InternalIter &end, const Func &transform) :
-			transform_iterator(iter),
+			transform_iterator<select_iterator<InternalIter, Func>, InternalIter, typename FUNC_RET(Func)>(iter),
 			end_(end),
 			transform_(transform)
 		{
@@ -238,8 +240,8 @@ namespace set
 
 		value_type operator*() const
 		{
-			if (iter_ != end_) {
-				return transform_(*iter_);
+			if (this->iter_ != end_) {
+				return transform_(*this->iter_);
 			} else {
 				throw std::runtime_error("iterator not dereferencable");
 			}
@@ -255,6 +257,10 @@ namespace set
 		typename std::vector<std::reference_wrapper<const ITER_VAL(InternalIter)>>::const_iterator,
 		const ITER_VAL(InternalIter)>
 	{
+	public:
+		using value_type = const ITER_VAL(InternalIter);
+
+	private:
 		using storage_type = std::vector<std::reference_wrapper<value_type>>;
 
 	public:
@@ -271,7 +277,7 @@ namespace set
 			if (sorted_->size() > 0)
 				dual_pivot_quicksort(0, sorted_->size() - 1, sorted_->size() - 1, keySelector, comparison);
 
-			iter_ = sorted_->begin();
+			this->iter_ = sorted_->begin();
 		}
 
 		order_by_iterator end()
@@ -429,7 +435,7 @@ namespace set
 		template<typename Func>
 		auto select(const Func &transform) const
 		{
-			return enumerable<FUNC_RET(Func), select_iterator<Iterator, Func>>(
+			return enumerable<typename FUNC_RET(Func), select_iterator<Iterator, Func>>(
 				select_iterator<Iterator, Func>(begin_, end_, transform),
 				select_iterator<Iterator, Func>(end_, end_, transform),
 				size_);
@@ -446,7 +452,7 @@ namespace set
 			for (Iterator iter = begin_; iter != end_; iter++)
 				if (filter(*iter))
 					return *iter;
-			throw runtime_error("Could not find element");
+			throw std::runtime_error("Could not find element");
 		}
 
 		reference last()
@@ -475,7 +481,7 @@ namespace set
 		template<typename Func, ENABLE_IF(FUNC_PARAM_COUNT(Func) == 2)>
 		difference_type first_index(const Func &filter)
 		{
-			FUNC_ARG_TYPE(Func, 1) i = 0;
+			typename FUNC_ARG_TYPE(Func, 1) i = 0;
 			for (Iterator iter = begin_; iter != end_; iter++, i++)
 				if (filter(*iter, i))
 					return i;
@@ -485,7 +491,7 @@ namespace set
 		template<typename KeyFunc>
 		auto order_by(const KeyFunc &keySelector)
 		{
-			static const auto comparison = [](const FUNC_RET(KeyFunc) &a, const FUNC_RET(KeyFunc) &b) {
+			static const auto comparison = [](const typename FUNC_RET(KeyFunc) &a, const typename FUNC_RET(KeyFunc) &b) {
 				if (a > b) {
 					return 1;
 				} else if (a < b) {

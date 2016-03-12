@@ -28,6 +28,9 @@
 
 #include <array>
 #include <vulkan/vulkan.h>
+#ifndef _WIN32
+#include <cstring>
+#endif
 #ifdef VKCPP_ENHANCED_MODE
 # include <vector>
 #endif    // VKCPP_ENHANCED_MODE

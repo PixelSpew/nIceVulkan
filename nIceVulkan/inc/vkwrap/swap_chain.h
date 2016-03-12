@@ -16,7 +16,7 @@ namespace nif
 		};
 
 	public:
-		swap_chain(const win32_surface &surface, const command_pool &cmdpool);
+		swap_chain(const surface_win32 &surface, const command_pool &cmdpool);
 		swap_chain(const swap_chain&) = delete;
 		~swap_chain();
 		uint32_t acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const;
@@ -33,7 +33,7 @@ namespace nif
 	private:
 		vk::SwapchainKHR handle_;
 		const device &device_;
-		const win32_surface &surface_;
+		const surface_win32 &surface_;
 		uint32_t width_;
 		uint32_t height_;
 		image depth_stencil_image_;

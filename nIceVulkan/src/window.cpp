@@ -52,6 +52,7 @@ namespace nif
 
 #define S window_static
 
+#ifdef _WIN32
 	window::window(const device &device) :
 		hinstance_(S::get_hinstance()),
 		hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
@@ -64,6 +65,17 @@ namespace nif
 
 		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
 	}
+#else
+	window::window(const device &device) :
+		display_(XOpenDisplay(nullptr)),
+		handle_(XCreateSimpleWindow(display_, DefaultRootWindow(dpy), 0, 0, width_, height_, 0, blackColor, blackColor)),
+		surface_(device, display_, handle_),
+		cmdpool_(surface_),
+		swap_(surface_, cmdpool_)
+	{
+		XMapWindow(dpy, w);
+	}
+#endif
 
 	window::~window()
 	{
@@ -115,29 +127,19 @@ namespace nif
 		return update_;
 	}
 
-	window::timeevent & window::draw()
+	window::timeevent& window::draw()
 	{
 		return draw_;
 	}
 
-	keyboard::keyevent &window::keyhit(const keys key)
+	keyboard::keyevent& window::keyhit(const keys key)
 	{
 		return keyboard_.keyhit(key);
 	}
 
-	mouse::buttonevent & window::buttonhit(const buttons button)
+	mouse::buttonevent& window::buttonhit(const buttons button)
 	{
 		return mouse_.buttonhit(button);
-	}
-
-	const HWND window::hwnd() const
-	{
-		return hwnd_;
-	}
-
-	const HINSTANCE window::hinstance() const
-	{
-		return hinstance_;
 	}
 
 	const command_pool& window::command_pool() const

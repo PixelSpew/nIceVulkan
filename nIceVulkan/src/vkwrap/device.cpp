@@ -67,7 +67,7 @@ namespace nif
 		return instance_;
 	}
 
-	const physical_device & device::physical_device() const
+	const physical_device& device::physdevice() const
 	{
 		return physical_device_;
 	}
