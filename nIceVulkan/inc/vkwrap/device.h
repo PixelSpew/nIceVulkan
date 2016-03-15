@@ -77,7 +77,7 @@ namespace nif
 		const instance& parent_instance() const;
 		const physical_device& physdevice() const;
 		vk::Format depth_format() const;
-		queue queue() const;
+		const queue& queue() const;
 
 	private:
 		vk::Device handle_;

@@ -339,7 +339,7 @@ namespace nif
 		return depth_format_;
 	}
 
-	queue device::queue() const
+	const queue& device::queue() const
 	{
 		return queue_;
 	}
