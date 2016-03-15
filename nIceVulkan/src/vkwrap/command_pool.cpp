@@ -6,19 +6,18 @@ using namespace std;
 
 namespace nif
 {
-	command_pool::command_pool(const surface_win32 &surface) :
-		device_(surface.parent_device())
+	command_pool::command_pool(const device &device, const surface_win32 &surface) :
+		device_(device)
 	{
-		vk::CommandPoolCreateInfo cmdPoolInfo;
-		cmdPoolInfo.queueFamilyIndex(surface.queue_node_index());
-		cmdPoolInfo.flags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
-
-		vk_try(vk::createCommandPool(surface.parent_device().handle(), &cmdPoolInfo, nullptr, &handle_));
+		handle_ = device.create_command_pool(
+			vk::CommandPoolCreateInfo()
+				.queueFamilyIndex(surface.queue_node_index())
+				.flags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer));
 	}
 
 	command_pool::~command_pool()
 	{
-		vk::destroyCommandPool(device_.handle(), handle_, nullptr);
+		device_.destroy_command_pool(handle_);
 	}
 
 	vk::CommandPool command_pool::handle() const

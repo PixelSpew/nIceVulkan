@@ -6,16 +6,15 @@ using namespace std;
 
 namespace nif
 {
-	pipeline_cache::pipeline_cache(const device &device)
-		: device_(device)
+	pipeline_cache::pipeline_cache(const device &device) :
+		device_(device)
 	{
-		vk::PipelineCacheCreateInfo pipelineCacheCreateInfo;
-		vk_try(vk::createPipelineCache(device.handle(), &pipelineCacheCreateInfo, nullptr, &handle_));
+		handle_ = device.create_pipeline_cache(vk::PipelineCacheCreateInfo());
 	}
 
 	pipeline_cache::~pipeline_cache()
 	{
-		vk::destroyPipelineCache(device_.handle(), handle_, nullptr);
+		device_.destroy_pipeline_cache(handle_);
 	}
 
 	vk::PipelineCache pipeline_cache::handle() const

@@ -6,7 +6,7 @@ namespace nif
 	class command_pool
 	{
 	public:
-		explicit command_pool(const surface_win32 &surface);
+		explicit command_pool(const device &device, const surface_win32 &surface);
 		command_pool(const command_pool&) = delete;
 		~command_pool();
 		vk::CommandPool handle() const;

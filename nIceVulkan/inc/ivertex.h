@@ -47,7 +47,7 @@ namespace nif
 			static const auto attribDescs = attrib_descs();
 
 			static const vk::PipelineVertexInputStateCreateInfo ret(
-				0,
+				vk::PipelineVertexInputStateCreateFlags(),
 				static_cast<uint32_t>(bindDescs.size()),
 				bindDescs.data(),
 				static_cast<uint32_t>(attribDescs.size()),

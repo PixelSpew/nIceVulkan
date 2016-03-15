@@ -12,17 +12,29 @@ namespace nif
 		instance(instance &&old);
 		~instance();
 
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+		const vk::SurfaceKHR create_win32_surface(const vk::Win32SurfaceCreateInfoKHR &createInfo) const;
+#endif
+		void destroy_surface(const vk::SurfaceKHR surface) const;
+
+		template<typename T>
+		T get_proc_addr(const std::string &name);
+		const std::vector<physical_device> enumerate_physical_devices() const;
+
 		vk::Instance handle() const;
-		const std::vector<physical_device>& physical_devices() const;
 
 		static const std::vector<const char*>& layers();
 
 	private:
 		vk::Instance handle_;
-		std::vector<physical_device> physical_devices_;
 #ifdef _DEBUG
-		vk::DebugReportCallbackEXT debug_report_;
-		PFN_vkDestroyDebugReportCallbackEXT destroy_debug_report_;
+		VkDebugReportCallbackEXT debug_report_;
 #endif
 	};
+
+	template<typename T>
+	T instance::get_proc_addr(const std::string & name)
+	{
+		return reinterpret_cast<T>(handle_.getProcAddr(name.c_str()));
+	}
 }

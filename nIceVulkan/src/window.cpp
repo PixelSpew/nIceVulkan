@@ -56,8 +56,8 @@ namespace nif
 	window::window(const device &device) :
 		hinstance_(S::get_hinstance()),
 		hwnd_(S::make_window(hinstance_, WndProc, width_, height_)),
-		surface_(device, hinstance_, hwnd_),
-		cmdpool_(surface_),
+		surface_(device.parent_instance(), device.physdevice(), hinstance_, hwnd_),
+		cmdpool_(device, surface_),
 		swap_(surface_, cmdpool_)
 	{
 		ShowWindow(hwnd_, SW_SHOW);

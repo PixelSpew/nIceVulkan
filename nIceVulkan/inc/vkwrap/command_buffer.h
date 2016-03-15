@@ -16,13 +16,12 @@ namespace nif
 		~command_buffer();
 		void begin();
 		void end();
-		void submit(const device &device);
-		void submit(const device &device, const semaphore &semaphore);
+		void submit(const device &device, const std::vector<std::reference_wrapper<semaphore>> &semaphores);
 		void begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height);
 		void end_render_pass();
 		void set_viewport(const float width, const float height);
 		void set_scissor(int32_t x, int32_t y, uint32_t width, uint32_t height);
-		void bind_descriptor_sets(const pipeline_layout &pipelayout, const descriptor_set &descset);
+		void bind_descriptor_set(const pipeline_layout &pipelayout, const descriptor_set &descset);
 		void bind_pipeline(const pipeline &pipeline);
 		void bind_vertex_buffer(const ibuffer &buffers);
 		void bind_index_buffer(const buffer<uint32_t> &buffer);

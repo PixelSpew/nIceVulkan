@@ -19,63 +19,68 @@ namespace nif
 		const pipeline_cache &cache) :
 		device_(&pass.parent_device())
 	{
-		vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;
-		inputAssemblyState.topology(vk::PrimitiveTopology::eTriangleList);
+		auto inputAssemblyState = vk::PipelineInputAssemblyStateCreateInfo()
+			.topology(vk::PrimitiveTopology::eTriangleList);
 
 		vk::PipelineRasterizationStateCreateInfo rasterizationState;
 
 		vector<vk::PipelineColorBlendAttachmentState> blendAttachmentState(1);
 		blendAttachmentState[0].colorWriteMask(static_cast<vk::ColorComponentFlagBits>(0xf));
 
-		vk::PipelineColorBlendStateCreateInfo colorBlendState;
-		colorBlendState.attachmentCount(static_cast<uint32_t>(blendAttachmentState.size()));
-		colorBlendState.pAttachments(blendAttachmentState.data());
+		auto colorBlendState = vk::PipelineColorBlendStateCreateInfo()
+			.attachmentCount(static_cast<uint32_t>(blendAttachmentState.size()))
+			.pAttachments(blendAttachmentState.data());
 
 		vk::PipelineMultisampleStateCreateInfo multisampleState;
 
-		vk::PipelineViewportStateCreateInfo viewportState;
-		viewportState.viewportCount(1);
-		viewportState.scissorCount(1);
+		auto viewportState = vk::PipelineViewportStateCreateInfo()
+			.viewportCount(1)
+			.scissorCount(1);
 
-		vk::StencilOpState stencilOpState;
-		stencilOpState.compareOp(vk::CompareOp::eAlways);
+		auto stencilOpState = vk::StencilOpState()
+			.compareOp(vk::CompareOp::eAlways);
 
-		vk::PipelineDepthStencilStateCreateInfo depthStencilState;
-		depthStencilState.depthTestEnable(VK_TRUE);
-		depthStencilState.depthWriteEnable(VK_TRUE);
-		depthStencilState.depthCompareOp(vk::CompareOp::eLessOrEqual);
-		depthStencilState.back(stencilOpState);
-		depthStencilState.front(stencilOpState);
+		auto depthStencilState = vk::PipelineDepthStencilStateCreateInfo()
+			.depthTestEnable(VK_TRUE)
+			.depthWriteEnable(VK_TRUE)
+			.depthCompareOp(vk::CompareOp::eLessOrEqual)
+			.back(stencilOpState)
+			.front(stencilOpState);
 
 		std::vector<vk::DynamicState> dynamicStateEnables = {
 			vk::DynamicState::eViewport,
 			vk::DynamicState::eScissor
 		};
 
-		vk::PipelineDynamicStateCreateInfo dynamicState;
-		dynamicState.dynamicStateCount(static_cast<uint32_t>(dynamicStateEnables.size()));
-		dynamicState.pDynamicStates(dynamicStateEnables.data());
+		auto dynamicState = vk::PipelineDynamicStateCreateInfo()
+			.dynamicStateCount(static_cast<uint32_t>(dynamicStateEnables.size()))
+			.pDynamicStates(dynamicStateEnables.data());
 
 		auto shaderStages = set::from(shaderModules)
 			.select([](const shader_module &x) {
-				return vk::PipelineShaderStageCreateInfo(0, x.stage(), x.handle(), "main", nullptr);
+				return vk::PipelineShaderStageCreateInfo()
+					.stage(x.stage())
+					.module(x.handle())
+					.pName("main");
 			}).to_vector();
 
-		vk::GraphicsPipelineCreateInfo pipelineCreateInfo;
-		pipelineCreateInfo.layout(layout.handle());
-		pipelineCreateInfo.renderPass(pass.handle());
-		pipelineCreateInfo.stageCount(static_cast<uint32_t>(shaderStages.size()));
-		pipelineCreateInfo.pStages(shaderStages.data());
-		pipelineCreateInfo.pVertexInputState(&vertexInputStateCreateInfo);
-		pipelineCreateInfo.pInputAssemblyState(&inputAssemblyState);
-		pipelineCreateInfo.pRasterizationState(&rasterizationState);
-		pipelineCreateInfo.pColorBlendState(&colorBlendState);
-		pipelineCreateInfo.pMultisampleState(&multisampleState);
-		pipelineCreateInfo.pViewportState(&viewportState);
-		pipelineCreateInfo.pDepthStencilState(&depthStencilState);
-		pipelineCreateInfo.pDynamicState(&dynamicState);
-
-		vk_try(vk::createGraphicsPipelines(pass.parent_device().handle(), cache.handle(), 1, &pipelineCreateInfo, nullptr, &handle_));
+		handle_ = pass.parent_device().create_graphics_pipelines(
+			cache.handle(),
+			{
+				vk::GraphicsPipelineCreateInfo()
+					.layout(layout.handle())
+					.renderPass(pass.handle())
+					.stageCount(static_cast<uint32_t>(shaderStages.size()))
+					.pStages(shaderStages.data())
+					.pVertexInputState(&vertexInputStateCreateInfo)
+					.pInputAssemblyState(&inputAssemblyState)
+					.pRasterizationState(&rasterizationState)
+					.pColorBlendState(&colorBlendState)
+					.pMultisampleState(&multisampleState)
+					.pViewportState(&viewportState)
+					.pDepthStencilState(&depthStencilState)
+					.pDynamicState(&dynamicState)
+			})[0];
 	}
 
 	pipeline::pipeline(pipeline &&old) :
@@ -88,7 +93,7 @@ namespace nif
 	pipeline::~pipeline()
 	{
 		if (handle_)
-			vk::destroyPipeline(device_->handle(), handle_, nullptr);
+			device_->destroy_pipeline(handle_);
 	}
 
 	vk::Pipeline pipeline::handle() const
@@ -96,7 +101,7 @@ namespace nif
 		return handle_;
 	}
 
-	pipeline& pipeline::operator=(pipeline && rhs)
+	pipeline& pipeline::operator=(pipeline &&rhs)
 	{
 		if (handle_ != rhs.handle_) {
 			handle_ = rhs.handle_;

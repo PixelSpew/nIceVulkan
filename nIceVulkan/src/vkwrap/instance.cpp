@@ -51,8 +51,7 @@ namespace nif
 		extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
-		vk::InstanceCreateInfo instanceCreateInfo;
-		instanceCreateInfo
+		auto instanceCreateInfo = vk::InstanceCreateInfo()
 			.pApplicationInfo(&appInfo)
 			.enabledExtensionCount(static_cast<uint32_t>(extensions.size()))
 			.ppEnabledExtensionNames(extensions.data())
@@ -60,28 +59,17 @@ namespace nif
 			.ppEnabledLayerNames(layers().data());
 		vk_try(vk::createInstance(&instanceCreateInfo, nullptr, &handle_));
 
-		uint32_t gpuCount;
-		vk_try(vk::enumeratePhysicalDevices(handle_, &gpuCount, nullptr));
-		std::vector<vk::PhysicalDevice> physicalHandles(gpuCount);
-		vk_try(vk::enumeratePhysicalDevices(handle_, &gpuCount, physicalHandles.data()));
-		physical_devices_ = set::from(physicalHandles)
-			.select([](const vk::PhysicalDevice x) { return physical_device(x); })
-			.to_vector();
-
 #ifdef _DEBUG
 		directory::create_directory("log");
 		file::write_all_text("log/log.txt", "");
 		
-		PFN_vkCreateDebugReportCallbackEXT createDebugReport = (PFN_vkCreateDebugReportCallbackEXT)vk::getInstanceProcAddr(handle_, "vkCreateDebugReportCallbackEXT");
-		destroy_debug_report_ = (PFN_vkDestroyDebugReportCallbackEXT)vk::getInstanceProcAddr(handle_, "vkDestroyDebugReportCallbackEXT");
-
 		VkDebugReportCallbackCreateInfoEXT dbgCreateInfo =
 			vk::DebugReportCallbackCreateInfoEXT(
 				vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning,
 				reinterpret_cast<PFN_vkDebugReportCallbackEXT>(messageCallback),
 				nullptr);
 
-		createDebugReport(handle_, &dbgCreateInfo, nullptr, &debug_report_);
+		vk_try(get_proc_addr<PFN_vkCreateDebugReportCallbackEXT>("vkCreateDebugReportCallbackEXT")(handle_, &dbgCreateInfo, nullptr, &debug_report_));
 #endif
 	}
 
@@ -96,11 +84,25 @@ namespace nif
 		if (handle_)
 		{
 #ifdef _DEBUG
-			destroy_debug_report_(handle_, debug_report_, nullptr);
+			get_proc_addr<PFN_vkDestroyDebugReportCallbackEXT>("vkDestroyDebugReportCallbackEXT")(handle_, debug_report_, nullptr);
 #endif
 
-			vk::destroyInstance(handle_, nullptr);
+			handle_.destroy(nullptr);
 		}
+	}
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+	const vk::SurfaceKHR instance::create_win32_surface(const vk::Win32SurfaceCreateInfoKHR &createInfo) const
+	{
+		vk::SurfaceKHR ret;
+		vk_try(handle_.createWin32SurfaceKHR(&createInfo, nullptr, &ret));
+		return ret;
+	}
+#endif
+
+	void instance::destroy_surface(const vk::SurfaceKHR surface) const
+	{
+		handle_.destroySurfaceKHR(surface, nullptr);
 	}
 
 	vk::Instance instance::handle() const
@@ -108,16 +110,22 @@ namespace nif
 		return handle_;
 	}
 
-	const vector<physical_device>& instance::physical_devices() const
+	const std::vector<physical_device> instance::enumerate_physical_devices() const
 	{
-		return physical_devices_;
+		uint32_t gpuCount;
+		vk_try(handle_.enumeratePhysicalDevices(&gpuCount, nullptr));
+		std::vector<vk::PhysicalDevice> physicalHandles(gpuCount);
+		vk_try(handle_.enumeratePhysicalDevices(&gpuCount, physicalHandles.data()));
+		return set::from(physicalHandles)
+			.select([](const vk::PhysicalDevice x) { return physical_device(x); })
+			.to_vector();
 	}
 
 	const vector<const char*>& instance::layers()
 	{
 #ifdef _DEBUG
 		static const vector<const char*> layers = {
-			"VK_LAYER_LUNARG_threading",
+			"VK_LAYER_GOOGLE_threading",
 			"VK_LAYER_LUNARG_mem_tracker",
 			"VK_LAYER_LUNARG_object_tracker",
 			"VK_LAYER_LUNARG_draw_state",

@@ -9,16 +9,15 @@ namespace nif
 	descriptor_set_layout::descriptor_set_layout(const device &device) :
 		device_(device)
 	{
-		vk::DescriptorSetLayoutBinding layoutBinding;
-		layoutBinding.descriptorType(vk::DescriptorType::eUniformBuffer);
-		layoutBinding.descriptorCount(1);
-		layoutBinding.stageFlags(vk::ShaderStageFlagBits::eVertex);
+		auto layoutBinding = vk::DescriptorSetLayoutBinding()
+			.descriptorType(vk::DescriptorType::eUniformBuffer)
+			.descriptorCount(1)
+			.stageFlags(vk::ShaderStageFlagBits::eVertex);
 
-		vk::DescriptorSetLayoutCreateInfo descriptorLayout;
-		descriptorLayout.bindingCount(1);
-		descriptorLayout.pBindings(&layoutBinding);
-
-		vk_try(vk::createDescriptorSetLayout(device.handle(), &descriptorLayout, NULL, &handle_));
+		handle_ = device.create_descriptor_set_layout(
+			vk::DescriptorSetLayoutCreateInfo()
+				.bindingCount(1)
+				.pBindings(&layoutBinding));
 	}
 
 	descriptor_set_layout::descriptor_set_layout(descriptor_set_layout &&old) :
@@ -31,7 +30,7 @@ namespace nif
 	descriptor_set_layout::~descriptor_set_layout()
 	{
 		if (handle_)
-			vk::destroyDescriptorSetLayout(device_.handle(), handle_, nullptr);
+			device_.destroy_descriptor_set_layout(handle_);
 	}
 
 	vk::DescriptorSetLayout descriptor_set_layout::handle() const

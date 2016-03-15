@@ -23,9 +23,9 @@ namespace nif
 		vk::PresentModeKHR present_mode(const vector<vk::PresentModeKHR> &presentModes)
 		{
 			static map<vk::PresentModeKHR, int> modePref = {
-				{ vk::PresentModeKHR::eVkPresentModeMailboxKhr, 3 },
-				{ vk::PresentModeKHR::eVkPresentModeImmediateKhr, 2 },
-				{ vk::PresentModeKHR::eVkPresentModeFifoKhr, 1 }
+				{ vk::PresentModeKHR::eMailboxKHR, 3 },
+				{ vk::PresentModeKHR::eImmediateKHR, 2 },
+				{ vk::PresentModeKHR::eFifoKHR, 1 }
 			};
 
 			return set::from(presentModes)
@@ -56,38 +56,30 @@ namespace nif
 	}
 
 	swap_chain::swap_chain(const surface_win32 &surface, const command_pool &cmdpool) :
-		device_(surface.parent_device()),
 		surface_(surface),
-		width_(surface.capabilities().currentExtent().width()),
-		height_(surface.capabilities().currentExtent().height()),
-		depth_stencil_image_(width_, height_, surface.parent_device()),
-		depth_stencil_view_(depth_stencil_image_, surface.parent_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil),
-		renderpass_(surface.parent_device())
+		width_(surface.get_capabilities().currentExtent().width()),
+		height_(surface.get_capabilities().currentExtent().height()),
+		depth_stencil_image_(width_, height_, cmdpool.parent_device()),
+		depth_stencil_view_(depth_stencil_image_, cmdpool.parent_device().depth_format(), vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil),
+		renderpass_(cmdpool.parent_device())
 	{
-		vk::SwapchainCreateInfoKHR swapchainCI(
-			0,
-			surface_.handle(),
-			S::min_image_count(surface_.capabilities().minImageCount(), surface_.capabilities().maxImageCount()),
-			S::image_format(surface.formats()[0].format()),
-			surface.formats()[0].colorSpace(),
-			vk::Extent2D(width_, height_),
-			1,
-			vk::ImageUsageFlagBits::eColorAttachment,
-			vk::SharingMode::eExclusive, 0, nullptr,
-			S::pretransform(surface_.capabilities()),
-			vk::CompositeAlphaFlagBitsKHR::eOpaque,
-			S::present_mode(surface.present_modes()),
-			VK_TRUE,
-			nullptr);
-		vk_try(vk::createSwapchainKHR(device_.handle(), &swapchainCI, nullptr, &handle_));
+		handle_ = cmdpool.parent_device().create_swap_chain(
+			vk::SwapchainCreateInfoKHR()
+				.surface(surface_.handle())
+				.minImageCount(S::min_image_count(surface_.get_capabilities().minImageCount(), surface_.get_capabilities().maxImageCount()))
+				.imageFormat(S::image_format(surface.get_formats()[0].format()))
+				.imageColorSpace(surface.get_formats()[0].colorSpace())
+				.imageExtent(vk::Extent2D(width_, height_))
+				.imageArrayLayers(1)
+				.imageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+				.imageSharingMode(vk::SharingMode::eExclusive)
+				.preTransform(S::pretransform(surface_.get_capabilities()))
+				.compositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+				.presentMode(S::present_mode(surface.get_present_modes()))
+				.clipped(VK_TRUE));
 
-		uint32_t imageCount;
-		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &imageCount, nullptr));
-		vector<vk::Image> swapchainImages(imageCount);
-		vk_try(vk::getSwapchainImagesKHR(device_.handle(), handle_, &imageCount, swapchainImages.data()));
-
-		buffers_ = set::from(swapchainImages)
-			.select([&](vk::Image x) { return buffer(device_, x, swapchainCI.imageFormat()); })
+		buffers_ = set::from(cmdpool.parent_device().get_swap_chain_images(handle_))
+			.select([&](vk::Image x) { return buffer(cmdpool.parent_device(), x, S::image_format(surface.get_formats()[0].format())); })
 			.to_vector();
 
 		command_buffer cmdbuf(cmdpool);
@@ -105,8 +97,8 @@ namespace nif
 			depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		cmdbuf.end();
-		cmdbuf.submit(surface.parent_device());
-		surface.parent_device().wait_queue_idle();
+		cmdbuf.submit(cmdpool.parent_device(), {});
+		cmdpool.parent_device().queue().wait_idle();
 
 		framebuffers_ = set::from(buffers_)
 			.select([&](const buffer &buf) { return framebuffer(width_, height_, renderpass_, { buf.view, depth_stencil_view_ }); })
@@ -115,25 +107,21 @@ namespace nif
 
 	swap_chain::~swap_chain()
 	{
-		vk::destroySwapchainKHR(device_.handle(), handle_, nullptr);
+		renderpass_.parent_device().destroy_swap_chain(handle_);
 	}
 
-	uint32_t swap_chain::acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const
+	uint32_t swap_chain::acquire_next_image(const semaphore &semaphore) const
 	{
-		uint32_t ret = currentBuffer;
-		if (vk::acquireNextImageKHR(device_.handle(), handle_, UINT64_MAX, semaphore.handle(), nullptr, &ret) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
-		return ret;
+		return renderpass_.parent_device().acquire_next_image(handle_, semaphore.handle());
 	}
 
 	void swap_chain::queuePresent(const uint32_t currentBuffer) const
 	{
-		vk::PresentInfoKHR presentInfo;
-		presentInfo.swapchainCount(1);
-		presentInfo.pSwapchains(&handle_);
-		presentInfo.pImageIndices(&currentBuffer);
-		if (vk::queuePresentKHR(device_.queue(), &presentInfo) != vk::Result::eVkSuccess)
-			throw runtime_error("fail");
+		renderpass_.parent_device().queue().present(
+			vk::PresentInfoKHR()
+				.swapchainCount(1)
+				.pSwapchains(&handle_)
+				.pImageIndices(&currentBuffer));
 	}
 
 	const vector<swap_chain::buffer>& swap_chain::buffers() const
@@ -148,7 +136,7 @@ namespace nif
 
 	const device& swap_chain::parent_device() const
 	{
-		return device_;
+		return renderpass_.parent_device();
 	}
 
 	uint32_t swap_chain::width() const

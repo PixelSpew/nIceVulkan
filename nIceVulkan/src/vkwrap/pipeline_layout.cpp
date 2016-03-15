@@ -11,18 +11,17 @@ namespace nif
 	{
 	}
 
-	pipeline_layout::pipeline_layout(const vector<descriptor_set_layout> &descSetLayouts)
-		: device_(&descSetLayouts[0].parent_device())
+	pipeline_layout::pipeline_layout(const vector<descriptor_set_layout> &descSetLayouts) :
+		device_(&descSetLayouts[0].parent_device())
 	{
 		auto handles = set::from(descSetLayouts)
 			.select([](const descriptor_set_layout &x) { return x.handle(); })
 			.to_vector();
 
-		vk::PipelineLayoutCreateInfo pPipelineLayoutCreateInfo;
-		pPipelineLayoutCreateInfo.setLayoutCount(static_cast<uint32_t>(descSetLayouts.size()));
-		pPipelineLayoutCreateInfo.pSetLayouts(handles.data());
-
-		vk_try(vk::createPipelineLayout(device_->handle(), &pPipelineLayoutCreateInfo, nullptr, &handle_));
+		device_->create_pipeline_layout(
+			vk::PipelineLayoutCreateInfo()
+				.setLayoutCount(static_cast<uint32_t>(handles.size()))
+				.pSetLayouts(handles.data()));
 	}
 
 	pipeline_layout::pipeline_layout(pipeline_layout &&old) :
@@ -35,7 +34,7 @@ namespace nif
 	pipeline_layout::~pipeline_layout()
 	{
 		if (handle_)
-			vk::destroyPipelineLayout(device_->handle(), handle_, nullptr);
+			device_->destroy_pipeline_layout(handle_);
 	}
 
 	vk::PipelineLayout pipeline_layout::handle() const

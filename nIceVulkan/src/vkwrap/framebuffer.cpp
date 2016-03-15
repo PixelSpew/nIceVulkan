@@ -18,18 +18,19 @@ namespace nif
 			.select([](const reference_wrapper<const image_view> &x) { return x.get().handle(); })
 			.to_vector();
 
-		vk::FramebufferCreateInfo frameBufferCreateInfo;
-		frameBufferCreateInfo.renderPass(pass.handle());
-		frameBufferCreateInfo.attachmentCount(static_cast<uint32_t>(views.size()));
-		frameBufferCreateInfo.pAttachments(handles.data());
-		frameBufferCreateInfo.width(width);
-		frameBufferCreateInfo.height(height);
-		frameBufferCreateInfo.layers(1);
-		vk_try(vk::createFramebuffer(pass.parent_device().handle(), &frameBufferCreateInfo, nullptr, &handle_));
+		handle_ = pass.parent_device().create_framebuffer(
+			vk::FramebufferCreateInfo()
+				.renderPass(pass.handle())
+				.attachmentCount(static_cast<uint32_t>(handles.size()))
+				.pAttachments(handles.data())
+				.width(width)
+				.height(height)
+				.layers(1));
 	}
 
-	framebuffer::framebuffer(framebuffer &&old)
-		: handle_(old.handle_), device_(move(old.device_))
+	framebuffer::framebuffer(framebuffer &&old) :
+		handle_(old.handle_),
+		device_(move(old.device_))
 	{
 		old.handle_ = nullptr;
 	}
@@ -37,7 +38,7 @@ namespace nif
 	framebuffer::~framebuffer()
 	{
 		if (handle_)
-			vk::destroyFramebuffer(device_.handle(), handle_, nullptr);
+			device_.destroy_framebuffer(handle_);
 	}
 
 	vk::Framebuffer framebuffer::handle() const

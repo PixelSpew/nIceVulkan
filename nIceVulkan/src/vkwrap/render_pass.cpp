@@ -9,45 +9,50 @@ namespace nif
 	render_pass::render_pass(const device &device)
 		: device_(device)
 	{
-		vk::AttachmentDescription attachments[2];
-		attachments[0].format(vk::Format::eB8G8R8A8Unorm);
-		attachments[0].samples(vk::SampleCountFlagBits::e1);
-		attachments[0].loadOp(vk::AttachmentLoadOp::eClear);
-		attachments[0].storeOp(vk::AttachmentStoreOp::eStore);
-		attachments[0].stencilLoadOp(vk::AttachmentLoadOp::eDontCare);
-		attachments[0].stencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-		attachments[0].initialLayout(vk::ImageLayout::eColorAttachmentOptimal);
-		attachments[0].finalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+		vector<vk::AttachmentDescription> attachments = {
+			vk::AttachmentDescription()
+				.format(vk::Format::eB8G8R8A8Unorm)
+				.samples(vk::SampleCountFlagBits::e1)
+				.loadOp(vk::AttachmentLoadOp::eClear)
+				.storeOp(vk::AttachmentStoreOp::eStore)
+				.stencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+				.stencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+				.initialLayout(vk::ImageLayout::eColorAttachmentOptimal)
+				.finalLayout(vk::ImageLayout::eColorAttachmentOptimal),
+			vk::AttachmentDescription()
+				.format(device.depth_format())
+				.samples(vk::SampleCountFlagBits::e1)
+				.loadOp(vk::AttachmentLoadOp::eClear)
+				.storeOp(vk::AttachmentStoreOp::eStore)
+				.stencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+				.stencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+				.initialLayout(vk::ImageLayout::eColorAttachmentOptimal)
+				.finalLayout(vk::ImageLayout::eColorAttachmentOptimal)
+		};
 
-		attachments[1].format(device.depth_format());
-		attachments[1].samples(vk::SampleCountFlagBits::e1);
-		attachments[1].loadOp(vk::AttachmentLoadOp::eClear);
-		attachments[1].storeOp(vk::AttachmentStoreOp::eStore);
-		attachments[1].stencilLoadOp(vk::AttachmentLoadOp::eDontCare);
-		attachments[1].stencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-		attachments[1].initialLayout(vk::ImageLayout::eColorAttachmentOptimal);
-		attachments[1].finalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+		auto colorReference = vk::AttachmentReference()
+			.attachment(0)
+			.layout(vk::ImageLayout::eColorAttachmentOptimal);
+		auto depthReference = vk::AttachmentReference()
+			.attachment(1)
+			.layout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-		vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-		vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+		auto subpass = vk::SubpassDescription()
+			.colorAttachmentCount(1)
+			.pColorAttachments(&colorReference)
+			.pDepthStencilAttachment(&depthReference);
 
-		vk::SubpassDescription subpass;
-		subpass.colorAttachmentCount(1);
-		subpass.pColorAttachments(&colorReference);
-		subpass.pDepthStencilAttachment(&depthReference);
-
-		vk::RenderPassCreateInfo renderPassInfo;
-		renderPassInfo.attachmentCount(2);
-		renderPassInfo.pAttachments(attachments);
-		renderPassInfo.subpassCount(1);
-		renderPassInfo.pSubpasses(&subpass);
-
-		vk_try(vk::createRenderPass(device.handle(), &renderPassInfo, nullptr, &handle_));
+		device.create_render_pass(
+			vk::RenderPassCreateInfo()
+				.attachmentCount(static_cast<uint32_t>(attachments.size()))
+				.pAttachments(attachments.data())
+				.subpassCount(1)
+				.pSubpasses(&subpass));
 	}
 
 	render_pass::~render_pass()
 	{
-		vk::destroyRenderPass(device_.handle(), handle_, nullptr);
+		device_.destroy_render_pass(handle_);
 	}
 
 	vk::RenderPass render_pass::handle() const

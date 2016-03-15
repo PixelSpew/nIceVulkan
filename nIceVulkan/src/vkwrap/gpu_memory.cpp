@@ -19,7 +19,7 @@ namespace nif
 		vk::MemoryAllocateInfo mem_alloc;
 		mem_alloc.allocationSize(memreqs.size());
 
-		const vk::MemoryType *memoryTypes = device.physdevice().memory_properties().memoryTypes();
+		const vk::MemoryType *memoryTypes = device.physdevice().get_memory_properties().memoryTypes();
 		for (uint32_t i = 0; i < 32; i++) {
 			if (memreqs.memoryTypeBits() & 1 << i) {
 				if (memoryTypes[i].propertyFlags() & memtype) {
@@ -29,27 +29,26 @@ namespace nif
 			}
 		}
 
-		vk_try(vk::allocateMemory(device.handle(), &mem_alloc, nullptr, &handle_));
+		handle_ = device.allocate_memory(mem_alloc);
 
 		if (data != nullptr) {
-			void *memmap;
-			vk_try(vk::mapMemory(device.handle(), handle_, 0, memreqs.size(), 0, &memmap));
+			void *memmap = device.map_memory(handle_, memreqs.size());
 			memcpy(memmap, data, memreqs.size());
-			vk::unmapMemory(device.handle(), handle_);
+			device.unmap_memory(handle_);
 		}
 	}
 
-	gpu_memory::gpu_memory(gpu_memory &&old)
-		: handle_(old.handle_),
-		  device_(old.device_)
+	gpu_memory::gpu_memory(gpu_memory &&old) :
+		handle_(old.handle_),
+		device_(old.device_)
 	{
 		old.handle_ = nullptr;
 	}
 
 	gpu_memory::~gpu_memory()
 	{
-		if (handle_ != nullptr)
-			vk::freeMemory(device_->handle(), handle_, nullptr);
+		if (handle_)
+			device_->free_memory(handle_);
 	}
 
 	vk::DeviceMemory gpu_memory::handle() const

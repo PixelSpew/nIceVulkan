@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "vkwrap/command_buffer.h"
 #include "util/shortcuts.h"
+#include "util/setops.h"
 
 using namespace std;
 
@@ -9,12 +10,11 @@ namespace nif
 	command_buffer::command_buffer(const command_pool &pool) :
 		pool_(pool)
 	{
-		vk::CommandBufferAllocateInfo allocateInfo;
-		allocateInfo.commandPool(pool.handle());
-		allocateInfo.level(vk::CommandBufferLevel::ePrimary);
-		allocateInfo.commandBufferCount(1);
-
-		vk_try(vk::allocateCommandBuffers(pool.parent_device().handle(), &allocateInfo, &handle_));
+		handle_ = pool.parent_device().allocate_command_buffers(
+			vk::CommandBufferAllocateInfo()
+				.commandPool(pool.handle())
+				.level(vk::CommandBufferLevel::ePrimary)
+				.commandBufferCount(1))[0];
 	}
 
 	command_buffer::command_buffer(command_buffer &&old) :
@@ -28,59 +28,50 @@ namespace nif
 	command_buffer::~command_buffer()
 	{
 		if (handle_)
-			vk::freeCommandBuffers(pool_.parent_device().handle(), pool_.handle(), 1, &handle_);
+			pool_.parent_device().free_command_buffers(pool_.handle(), { handle_ });
 	}
 
 	void command_buffer::begin()
 	{
-		vk_try(vk::beginCommandBuffer(handle_, &begin_info_));
+		vk_try(handle_.begin(&begin_info_));
 	}
 
 	void command_buffer::end()
 	{
-		vk_try(vk::endCommandBuffer(handle_));
+		vk_try(handle_.end());
 	}
 
-	void command_buffer::submit(const device &device)
+	void command_buffer::submit(const device &device, const vector<reference_wrapper<semaphore>> &semaphores)
 	{
-		vk::CommandBuffer cmdbufferHandle = handle_;
+		vector<vk::Semaphore> handles = set::from(semaphores)
+			.select([](const reference_wrapper<semaphore> &x) { return x.get().handle(); })
+			.to_vector();
 
-		vk::SubmitInfo submitInfo;
-		submitInfo.commandBufferCount(1);
-		submitInfo.pCommandBuffers(&cmdbufferHandle);
-
-		vk_try(vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE));
-	}
-
-	void command_buffer::submit(const device &device, const semaphore &semaphore)
-	{
-		vk::Semaphore semaphoreHandle = semaphore.handle();
-		vk::CommandBuffer cmdbufferHandle = handle_;
-
-		vk::SubmitInfo submitInfo;
-		submitInfo.waitSemaphoreCount(1);
-		submitInfo.pWaitSemaphores(&semaphoreHandle);
-		submitInfo.commandBufferCount(1);
-		submitInfo.pCommandBuffers(&cmdbufferHandle);
-
-		vk_try(vk::queueSubmit(device.queue(), 1, &submitInfo, VK_NULL_HANDLE));
+		device.queue().submit(
+		{
+			vk::SubmitInfo()
+				.waitSemaphoreCount(static_cast<uint32_t>(handles.size()))
+				.pWaitSemaphores(handles.data())
+				.commandBufferCount(1)
+				.pCommandBuffers(&handle_)
+		});
 	}
 
 	void command_buffer::begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height)
 	{
-		vk::ClearValue clearValues[2];
 		array<float, 4> clearColor = { .2f, .2f, .2f, 1 };
+		vk::ClearValue clearValues[2];
 		clearValues[0].color(vk::ClearColorValue(clearColor));
 		clearValues[1].depthStencil(vk::ClearDepthStencilValue(1.0f, 0));
 
-		vk::RenderPassBeginInfo beginInfo;
-		beginInfo.renderPass(pass.handle());
-		beginInfo.renderArea(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
-		beginInfo.clearValueCount(2);
-		beginInfo.pClearValues(clearValues);
-		beginInfo.framebuffer(framebuffer.handle());
+		vk::RenderPassBeginInfo beginInfo = vk::RenderPassBeginInfo()
+			.renderPass(pass.handle())
+			.renderArea(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)))
+			.clearValueCount(2)
+			.pClearValues(clearValues)
+			.framebuffer(framebuffer.handle());
 
-		vk::cmdBeginRenderPass(handle_, &beginInfo, vk::SubpassContents::eInline);
+		handle_.beginRenderPass(&beginInfo, vk::SubpassContents::eInline);
 	}
 
 	void command_buffer::end_render_pass()
@@ -90,45 +81,53 @@ namespace nif
 
 	void command_buffer::set_viewport(const float width, const float height)
 	{
-		vk::Viewport viewport;
-		viewport.height(height);
-		viewport.width(width);
-		viewport.minDepth(0.0f);
-		viewport.maxDepth(1.0f);
-		vk::cmdSetViewport(handle_, 0, 1, &viewport);
+		vk::Viewport viewport = vk::Viewport()
+			.height(height)
+			.width(width)
+			.minDepth(0.0f)
+			.maxDepth(1.0f);
+
+		handle_.setViewport(0, 1, &viewport);
 	}
 
 	void command_buffer::set_scissor(int32_t x, int32_t y, uint32_t width, uint32_t height)
 	{
-		vk::Rect2D scissor(vk::Offset2D(x, y), vk::Extent2D(width, height));
-		vk::cmdSetScissor(handle_, 0, 1, &scissor);
+		vk::Rect2D scissor = vk::Rect2D()
+			.offset(vk::Offset2D(x, y))
+			.extent(vk::Extent2D(width, height));
+
+		handle_.setScissor(0, 1, &scissor);
 	}
 
-	void command_buffer::bind_descriptor_sets(const pipeline_layout &pipelayout, const descriptor_set &descset)
+	void command_buffer::bind_descriptor_set(const pipeline_layout &pipelayout, const descriptor_set &descset)
 	{
-		vk::cmdBindDescriptorSets(handle_, vk::PipelineBindPoint::eGraphics, pipelayout.handle(), 0, static_cast<uint32_t>(descset.size()), descset.handles().data(), 0, nullptr);
+		handle_.bindDescriptorSets(
+			vk::PipelineBindPoint::eGraphics,
+			pipelayout.handle(),
+			0,
+			1, &descset.handle(),
+			0, nullptr);
 	}
 
 	void command_buffer::bind_pipeline(const pipeline &pipeline)
 	{
-		vk::cmdBindPipeline(handle_, vk::PipelineBindPoint::eGraphics, pipeline.handle());
+		handle_.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.handle());
 	}
 
 	void command_buffer::bind_vertex_buffer(const ibuffer &buffer)
 	{
-		vk::Buffer bufhandle = buffer.handle();
 		vector<vk::DeviceSize> offsets = { 0 };
-		vk::cmdBindVertexBuffers(handle_, 0, 1, &bufhandle, offsets.data());
+		handle_.bindVertexBuffers(0, 1, &buffer.handle(), offsets.data());
 	}
 
 	void command_buffer::bind_index_buffer(const buffer<uint32_t> &buffer)
 	{
-		vk::cmdBindIndexBuffer(handle_, buffer.handle(), 0, vk::IndexType::eUint32);
+		handle_.bindIndexBuffer(buffer.handle(), 0, vk::IndexType::eUint32);
 	}
 
 	void command_buffer::draw_indexed(const uint32_t indexCount)
 	{
-		vk::cmdDrawIndexed(handle_, indexCount, 1, 0, 0, 1);
+		handle_.drawIndexed(indexCount, 1, 0, 0, 1);
 	}
 
 	void command_buffer::pipeline_barrier(const image &image)
@@ -143,11 +142,10 @@ namespace nif
 		barrier.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 		barrier.image(image.handle());
 
-		vk::cmdPipelineBarrier(
-			handle_,
+		handle_.pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllCommands,
 			vk::PipelineStageFlagBits::eTopOfPipe,
-			static_cast<vk::DependencyFlagBits>(0),
+			vk::DependencyFlags(),
 			0, nullptr,
 			0, nullptr,
 			1, &barrier);
@@ -200,7 +198,13 @@ namespace nif
 		vk::PipelineStageFlags destStageFlags = vk::PipelineStageFlagBits::eTopOfPipe;
 
 		// Put barrier inside setup command buffer
-		vk::cmdPipelineBarrier(handle_, srcStageFlags, destStageFlags, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &imgMemBarrier);
+		handle_.pipelineBarrier(
+			srcStageFlags,
+			destStageFlags,
+			vk::DependencyFlagBits::eByRegion,
+			0, nullptr,
+			0, nullptr,
+			1, &imgMemBarrier);
 	}
 
 	vk::CommandBuffer command_buffer::handle() const

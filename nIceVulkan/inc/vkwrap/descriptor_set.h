@@ -11,12 +11,10 @@ namespace nif
 		explicit descriptor_set(const std::vector<descriptor_set_layout> &setLayouts, const descriptor_pool &pool, const ibuffer &buffer);
 		descriptor_set(const descriptor_set&) = delete;
 		~descriptor_set();
-		size_t size() const;
-		const std::vector<vk::DescriptorSet>& handles() const;
+		vk::DescriptorSet handle() const;
 
 	private:
-		std::vector<vk::DescriptorSet> handles_;
-		const device &device_;
+		vk::DescriptorSet handle_;
 		const descriptor_pool &pool_;
 	};
 }

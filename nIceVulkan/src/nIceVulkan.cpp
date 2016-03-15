@@ -57,7 +57,7 @@ int main()
 		drawCmdBuffers[i].begin_render_pass(renderpass, wnd.swap_chain().framebuffers()[i], swapWidth, swapHeight);
 		drawCmdBuffers[i].set_viewport(static_cast<float>(swapWidth), static_cast<float>(swapHeight));
 		drawCmdBuffers[i].set_scissor(0, 0, swapWidth, swapHeight);
-		drawCmdBuffers[i].bind_descriptor_sets(shader.pipeline_layout(), descriptorSet);
+		drawCmdBuffers[i].bind_descriptor_set(shader.pipeline_layout(), descriptorSet);
 		drawCmdBuffers[i].bind_pipeline(shader.pipeline());
 		drawCmdBuffers[i].bind_vertex_buffer(sphere.meshes()[0].vertex_buffer());
 		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
@@ -73,20 +73,19 @@ int main()
 		wnd.close();
 	});
 
-	uint32_t currentBuffer = 0;
 	command_buffer postPresentCmdBuffer(wnd.command_pool());
 	wnd.draw().add([&](double delta) {
-		device.wait_queue_idle();
+		device.queue().wait_idle();
 
 		semaphore presentCompleteSemaphore(device);
-		currentBuffer = wnd.swap_chain().acquireNextImage(presentCompleteSemaphore, currentBuffer);
-		drawCmdBuffers[currentBuffer].submit(device);
+		uint32_t currentBuffer = wnd.swap_chain().acquire_next_image(presentCompleteSemaphore);
+		drawCmdBuffers[currentBuffer].submit(device, {});
 		wnd.swap_chain().queuePresent(currentBuffer);
 
 		postPresentCmdBuffer.begin();
 		postPresentCmdBuffer.pipeline_barrier(wnd.swap_chain().buffers()[currentBuffer].image);
 		postPresentCmdBuffer.end();
-		postPresentCmdBuffer.submit(device);
+		postPresentCmdBuffer.submit(device, {});
 	});
 	wnd.run(60);
 }

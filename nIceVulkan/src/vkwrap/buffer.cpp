@@ -9,22 +9,24 @@ namespace nif
 	ibuffer::ibuffer(const device &device, const vk::BufferUsageFlags flags, const void *data, const size_t size)
 		: device_(device), size_(size)
 	{
-		vk::BufferCreateInfo bufInfo;
-		bufInfo.size(static_cast<vk::DeviceSize>(size));
-		bufInfo.usage(flags);
+		handle_ = device.create_buffer(
+			vk::BufferCreateInfo()
+				.size(static_cast<vk::DeviceSize>(size))
+				.usage(flags));
 
-		vk_try(vk::createBuffer(device.handle(), &bufInfo, nullptr, &handle_));
+		gpumem_ = gpu_memory(
+			device,
+			device.get_buffer_memory_requirements(handle_),
+			vk::MemoryPropertyFlagBits::eHostVisible,
+			data);
 
-		vk::MemoryRequirements memreq;
-		vk::getBufferMemoryRequirements(device.handle(), handle_, &memreq);
-		gpumem_ = gpu_memory(device, memreq, vk::MemoryPropertyFlagBits::eHostVisible, data);
-		vk_try(vk::bindBufferMemory(device.handle(), handle_, gpumem_.handle(), 0));
+		device.bind_buffer_memory(handle_, gpumem_.handle(), 0);
 	}
 
 	ibuffer::~ibuffer()
 	{
-		if (handle_ != nullptr)
-			vk::destroyBuffer(device_.handle(), handle_, nullptr);
+		if (handle_)
+			device_.destroy_buffer(handle_);
 	}
 
 	ibuffer::ibuffer(ibuffer &&old) :

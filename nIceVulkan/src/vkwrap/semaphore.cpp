@@ -6,16 +6,15 @@ using namespace std;
 
 namespace nif
 {
-	semaphore::semaphore(const device &device)
-		: device_(device)
+	semaphore::semaphore(const device &device) :
+		device_(device)
 	{
-		vk::SemaphoreCreateInfo createInfo;
-		vk_try(vk::createSemaphore(device.handle(), &createInfo, nullptr, &handle_));
+		handle_ = device.create_semaphore(vk::SemaphoreCreateInfo());
 	}
 
 	semaphore::~semaphore()
 	{
-		vk::destroySemaphore(device_.handle(), handle_, nullptr);
+		device_.destroy_semaphore(handle_);
 	}
 
 	vk::Semaphore semaphore::handle() const

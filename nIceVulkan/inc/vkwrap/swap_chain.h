@@ -19,7 +19,7 @@ namespace nif
 		swap_chain(const surface_win32 &surface, const command_pool &cmdpool);
 		swap_chain(const swap_chain&) = delete;
 		~swap_chain();
-		uint32_t acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const;
+		uint32_t acquire_next_image(const semaphore &semaphore) const;
 		void queuePresent(const uint32_t currentBuffer) const;
 
 		const device& parent_device() const;
@@ -31,7 +31,6 @@ namespace nif
 
 	private:
 		vk::SwapchainKHR handle_;
-		const device &device_;
 		const surface_win32 &surface_;
 		uint32_t width_;
 		uint32_t height_;

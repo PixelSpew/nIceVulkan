@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "vkwrap/physical_device.h"
+#include "util/shortcuts.h"
 
 using namespace std;
 
@@ -8,12 +9,6 @@ namespace nif
 	physical_device::physical_device(vk::PhysicalDevice handle) :
 		handle_(handle)
 	{
-		uint32_t queueCount;
-		vk::getPhysicalDeviceQueueFamilyProperties(handle, &queueCount, nullptr);
-		queue_props_.resize(queueCount);
-		vk::getPhysicalDeviceQueueFamilyProperties(handle_, &queueCount, queue_props_.data());
-
-		vk::getPhysicalDeviceMemoryProperties(handle_, &memory_properties_);
 	}
 
 	vk::PhysicalDevice physical_device::handle() const
@@ -21,20 +16,65 @@ namespace nif
 		return handle_;
 	}
 
-	const std::vector<vk::QueueFamilyProperties>& physical_device::queue_props() const
+	vk::Device physical_device::create_device(const vk::DeviceCreateInfo & createInfo) const
 	{
-		return queue_props_;
+		vk::Device ret;
+		vk_try(handle_.createDevice(&createInfo, nullptr, &ret));
+		return ret;
 	}
 
-	const vk::PhysicalDeviceMemoryProperties& physical_device::memory_properties() const
-	{
-		return memory_properties_;
-	}
-
-	vk::FormatProperties physical_device::query_format_properties(vk::Format format) const
+	vk::FormatProperties physical_device::get_format_properties(vk::Format format) const
 	{
 		vk::FormatProperties ret;
-		vk::getPhysicalDeviceFormatProperties(handle_, format, &ret);
+		handle_.getFormatProperties(format, &ret);
+		return ret;
+	}
+
+	vk::PhysicalDeviceMemoryProperties physical_device::get_memory_properties() const
+	{
+		vk::PhysicalDeviceMemoryProperties ret;
+		handle_.getMemoryProperties(&ret);
+		return ret;
+	}
+
+	vector<vk::QueueFamilyProperties> physical_device::get_queue_family_properties() const
+	{
+		uint32_t queueCount;
+		handle_.getQueueFamilyProperties(&queueCount, nullptr);
+		vector<vk::QueueFamilyProperties> ret(queueCount);
+		handle_.getQueueFamilyProperties(&queueCount, ret.data());
+		return ret;
+	}
+
+	vk::Bool32 physical_device::get_surface_support(const uint32_t queueFamilyIndex, const vk::SurfaceKHR surface) const
+	{
+		vk::Bool32 ret;
+		vk_try(handle_.getSurfaceSupportKHR(queueFamilyIndex, surface, &ret));
+		return ret;
+	}
+
+	vk::SurfaceCapabilitiesKHR physical_device::get_surface_capabilities(const vk::SurfaceKHR surface) const
+	{
+		vk::SurfaceCapabilitiesKHR ret;
+		vk_try(handle_.getSurfaceCapabilitiesKHR(surface, &ret));
+		return ret;
+	}
+
+	vector<vk::PresentModeKHR> physical_device::get_surface_present_modes(const vk::SurfaceKHR surface) const
+	{
+		uint32_t count;
+		vk_try(handle_.getSurfacePresentModesKHR(surface, &count, nullptr));
+		vector<vk::PresentModeKHR> ret(count);
+		vk_try(handle_.getSurfacePresentModesKHR(surface, &count, ret.data()));
+		return ret;
+	}
+
+	vector<vk::SurfaceFormatKHR> physical_device::get_surface_formats(const vk::SurfaceKHR surface) const
+	{
+		uint32_t count;
+		vk_try(handle_.getSurfaceFormatsKHR(surface, &count, nullptr));
+		vector<vk::SurfaceFormatKHR> ret(count);
+		vk_try(handle_.getSurfaceFormatsKHR(surface, &count, ret.data()));
 		return ret;
 	}
 }

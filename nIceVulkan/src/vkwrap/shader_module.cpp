@@ -10,11 +10,10 @@ namespace nif
 		device_(device),
 		stage_(stage)
 	{
-		vk::ShaderModuleCreateInfo moduleCreateInfo;
-		moduleCreateInfo.codeSize(source.size());
-		moduleCreateInfo.pCode(reinterpret_cast<const uint32_t*>(source.data()));
-
-		vk_try(vk::createShaderModule(device.handle(), &moduleCreateInfo, nullptr, &handle_));
+		device.create_shader_module(
+			vk::ShaderModuleCreateInfo()
+				.codeSize(source.size())
+				.pCode(reinterpret_cast<const uint32_t*>(source.data())));
 	}
 
 	shader_module::shader_module(shader_module &&old) :
@@ -28,7 +27,7 @@ namespace nif
 	shader_module::~shader_module()
 	{
 		if (handle_)
-			vk::destroyShaderModule(device_.handle(), handle_, nullptr);
+			device_.destroy_shader_module(handle_);
 	}
 
 	vk::ShaderModule shader_module::handle() const
