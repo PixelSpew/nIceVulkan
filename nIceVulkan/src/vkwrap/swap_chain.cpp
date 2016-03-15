@@ -115,6 +115,7 @@ namespace nif
 
 	swap_chain::~swap_chain()
 	{
+		vk::destroySwapchainKHR(device_.handle(), handle_, nullptr);
 	}
 
 	uint32_t swap_chain::acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const
@@ -133,12 +134,6 @@ namespace nif
 		presentInfo.pImageIndices(&currentBuffer);
 		if (vk::queuePresentKHR(device_.queue(), &presentInfo) != vk::Result::eVkSuccess)
 			throw runtime_error("fail");
-	}
-
-	void swap_chain::cleanup()
-	{
-		buffers_.clear();
-		vk::destroySwapchainKHR(device_.handle(), handle_, nullptr);
 	}
 
 	const vector<swap_chain::buffer>& swap_chain::buffers() const

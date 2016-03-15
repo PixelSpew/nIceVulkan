@@ -21,7 +21,6 @@ namespace nif
 		~swap_chain();
 		uint32_t acquireNextImage(const semaphore &semaphore, const uint32_t currentBuffer) const;
 		void queuePresent(const uint32_t currentBuffer) const;
-		void cleanup();
 
 		const device& parent_device() const;
 		uint32_t width() const;

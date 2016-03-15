@@ -53,6 +53,7 @@ artifacts/
 *.ilk
 *.meta
 *.obj
+!nIceVulkan/res/*.obj
 *.pch
 *.pdb
 *.pgc

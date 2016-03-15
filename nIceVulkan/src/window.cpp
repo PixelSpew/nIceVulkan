@@ -65,6 +65,73 @@ namespace nif
 
 		windows.insert(pair<const HWND, reference_wrapper<window>>(hwnd_, *this));
 	}
+
+	LRESULT CALLBACK window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message) {
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			// TODO: Add any drawing code that uses hdc here...
+			EndPaint(hWnd, &ps);
+		} break;
+		case WM_KEYDOWN:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().keyboard_.set_key(wParam, lParam, true);
+		} break;
+		case WM_KEYUP:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().keyboard_.set_key(wParam, lParam, false);
+		} break;
+		case WM_LBUTTONDOWN:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, true);
+		} break;
+		case WM_LBUTTONUP:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, false);
+		} break;
+		case WM_RBUTTONDOWN:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, true);
+		} break;
+		case WM_RBUTTONUP:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, false);
+		} break;
+		case WM_MBUTTONDOWN:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, true);
+		} break;
+		case WM_MBUTTONUP:
+		{
+			auto win = windows.find(hWnd);
+			if (win != windows.end())
+				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, false);
+		} break;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+		return 0;
+	}
 #else
 	window::window(const device &device) :
 		display_(XOpenDisplay(nullptr)),
@@ -96,6 +163,7 @@ namespace nif
 			lag += elapsed;
 
 			while (lag >= updateRate) {
+#ifdef _WIN32
 				MSG msg;
 				while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 					if (msg.message == WM_QUIT)
@@ -104,6 +172,11 @@ namespace nif
 					TranslateMessage(&msg);
 					DispatchMessage(&msg);
 				}
+#else
+				while (true) {
+
+				}
+#endif
 				keyboard_.update();
 				mouse_.update();
 
@@ -160,79 +233,5 @@ namespace nif
 	int window::height() const
 	{
 		return height_;
-	}
-
-	LRESULT CALLBACK window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-	{
-		switch (message) {
-		case WM_PAINT:
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);
-			// TODO: Add any drawing code that uses hdc here...
-			EndPaint(hWnd, &ps);
-		} break;
-		case WM_KEYDOWN:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().keyboard_.set_key(wParam, lParam, true);
-		} break;
-		case WM_KEYUP:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().keyboard_.set_key(wParam, lParam, false);
-		}
-		break;
-		case WM_LBUTTONDOWN:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, true);
-		}
-		break;
-		case WM_LBUTTONUP:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().mouse_.set_button(buttons::left, wParam, lParam, false);
-		}
-		break;
-		case WM_RBUTTONDOWN:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, true);
-		}
-		break;
-		case WM_RBUTTONUP:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().mouse_.set_button(buttons::right, wParam, lParam, false);
-		}
-		break;
-		case WM_MBUTTONDOWN:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, true);
-		}
-		break;
-		case WM_MBUTTONUP:
-		{
-			auto win = windows.find(hWnd);
-			if (win != windows.end())
-				win->second.get().mouse_.set_button(buttons::middle, wParam, lParam, false);
-		}
-		break;
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			break;
-		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
-		}
-		return 0;
 	}
 }
