@@ -10,7 +10,7 @@ namespace nif
 		device_(device),
 		stage_(stage)
 	{
-		device.create_shader_module(
+		handle_ = device.create_shader_module(
 			vk::ShaderModuleCreateInfo()
 				.codeSize(source.size())
 				.pCode(reinterpret_cast<const uint32_t*>(source.data())));

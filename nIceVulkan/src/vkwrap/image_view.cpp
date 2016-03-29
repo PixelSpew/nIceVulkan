@@ -9,7 +9,7 @@ namespace nif
 	image_view::image_view(const image &image, const vk::Format format, vk::ImageAspectFlags aspectFlags)
 		: device_(image.parent_device())
 	{
-		device_.create_image_view(
+		handle_ = device_.create_image_view(
 			vk::ImageViewCreateInfo()
 				.viewType(vk::ImageViewType::e2D)
 				.format(format)

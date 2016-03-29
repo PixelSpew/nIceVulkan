@@ -42,7 +42,7 @@ namespace nif
 			.pColorAttachments(&colorReference)
 			.pDepthStencilAttachment(&depthReference);
 
-		device.create_render_pass(
+		handle_ = device.create_render_pass(
 			vk::RenderPassCreateInfo()
 				.attachmentCount(static_cast<uint32_t>(attachments.size()))
 				.pAttachments(attachments.data())

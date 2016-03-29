@@ -82,7 +82,7 @@ namespace nif
 	private:
 		vk::Device handle_;
 		const instance &instance_;
-		const nif::physical_device &physical_device_;
+		nif::physical_device physical_device_;
 		vk::Format depth_format_;
 		nif::queue queue_;
 	};

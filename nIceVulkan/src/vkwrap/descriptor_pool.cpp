@@ -13,7 +13,7 @@ namespace nif
 			.type(vk::DescriptorType::eUniformBuffer)
 			.descriptorCount(1);
 
-		device.create_descriptor_pool(
+		handle_ = device.create_descriptor_pool(
 			vk::DescriptorPoolCreateInfo()
 				.poolSizeCount(1)
 				.pPoolSizes(&poolSize)

@@ -18,7 +18,7 @@ namespace nif
 			.select([](const descriptor_set_layout &x) { return x.handle(); })
 			.to_vector();
 
-		device_->create_pipeline_layout(
+		handle_ = device_->create_pipeline_layout(
 			vk::PipelineLayoutCreateInfo()
 				.setLayoutCount(static_cast<uint32_t>(handles.size()))
 				.pSetLayouts(handles.data()));
