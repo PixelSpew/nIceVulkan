@@ -8,9 +8,11 @@ namespace nif
 	class descriptor_set
 	{
 	public:
-		explicit descriptor_set(const std::vector<descriptor_set_layout> &setLayouts, const descriptor_pool &pool, const ibuffer &buffer);
+		descriptor_set(const std::vector<descriptor_set_layout> &setLayouts, const descriptor_pool &pool);
 		descriptor_set(const descriptor_set&) = delete;
 		~descriptor_set();
+		void update_buffer(const vk::DescriptorType type, const uint32_t binding, const ibuffer &buffer);
+
 		vk::DescriptorSet handle() const;
 
 	private:

@@ -45,7 +45,8 @@ int main()
 
 	descriptor_pool descriptorPool(device);
 	buffer<ubo_type> uboBuffer(device, vk::BufferUsageFlagBits::eUniformBuffer, vector<ubo_type>(1, uboVS));
-	descriptor_set descriptorSet(shader.descriptor_set_layouts(), descriptorPool, uboBuffer);
+	descriptor_set descriptorSet(shader.descriptor_set_layouts(), descriptorPool);
+	descriptorSet.update_buffer(vk::DescriptorType::eUniformBuffer, 0, uboBuffer);
 
 	std::vector<command_buffer> drawCmdBuffers;
 	for (size_t i = 0; i < wnd.swap_chain().buffers().size(); i++)
