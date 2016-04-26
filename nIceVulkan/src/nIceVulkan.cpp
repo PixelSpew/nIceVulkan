@@ -19,7 +19,7 @@ int main()
 	device device(instance);
 	window wnd(device);
 
-	model sphere(device, "C:/Users/Icy Defiance/Documents/CodeNew/nIceVulkan/nIceVulkan/res/sphere.obj");
+	model sphere(device, res_path() + "sphere.obj");
 
 	struct ubo_type
 	{
