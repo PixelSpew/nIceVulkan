@@ -9,14 +9,19 @@ namespace nif
 	descriptor_pool::descriptor_pool(const device &device) :
 		device_(device)
 	{
-		vk::DescriptorPoolSize poolSize = vk::DescriptorPoolSize()
-			.type(vk::DescriptorType::eUniformBuffer)
-			.descriptorCount(1);
+		vector<vk::DescriptorPoolSize> poolSizes = {
+			vk::DescriptorPoolSize()
+				.type(vk::DescriptorType::eUniformBuffer)
+				.descriptorCount(1),
+			vk::DescriptorPoolSize()
+				.type(vk::DescriptorType::eCombinedImageSampler)
+				.descriptorCount(1)
+		};
 
 		handle_ = device.create_descriptor_pool(
 			vk::DescriptorPoolCreateInfo()
-				.poolSizeCount(1)
-				.pPoolSizes(&poolSize)
+				.poolSizeCount(static_cast<uint32_t>(poolSizes.size()))
+				.pPoolSizes(poolSizes.data())
 				.maxSets(1));
 	}
 
@@ -30,7 +35,7 @@ namespace nif
 		return handle_;
 	}
 
-	const device & descriptor_pool::parent_device() const
+	const device& descriptor_pool::parent_device() const
 	{
 		return device_;
 	}

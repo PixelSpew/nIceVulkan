@@ -7,7 +7,7 @@ namespace nif
 {
 	shader::shader(
 		const render_pass &pass,
-		const pipeline_cache& cache,
+		const pipeline_cache &cache,
 		const vector<char> &vertsrc,
 		const vector<char> &fragsrc,
 		const vk::PipelineVertexInputStateCreateInfo &vertinfo)
@@ -15,7 +15,22 @@ namespace nif
 		modules_.push_back(shader_module(pass.parent_device(), vertsrc, vk::ShaderStageFlagBits::eVertex));
 		modules_.push_back(shader_module(pass.parent_device(), fragsrc, vk::ShaderStageFlagBits::eFragment));
 		
-		descriptor_set_layouts_.push_back(descriptor_set_layout(pass.parent_device()));
+		descriptor_set_layouts_.push_back(
+			descriptor_set_layout(
+				pass.parent_device(),
+				{
+					vk::DescriptorSetLayoutBinding()
+						.binding(0)
+						.descriptorType(vk::DescriptorType::eUniformBuffer)
+						.descriptorCount(1)
+						.stageFlags(vk::ShaderStageFlagBits::eVertex),
+					vk::DescriptorSetLayoutBinding()
+						.binding(1)
+						.descriptorType(vk::DescriptorType::eCombinedImageSampler)
+						.descriptorCount(1)
+						.stageFlags(vk::ShaderStageFlagBits::eFragment)
+				}));
+
 		pipeline_layout_ = nif::pipeline_layout(descriptor_set_layouts_);
 		pipeline_ = nif::pipeline(pipeline_layout_, pass, modules_, vertinfo, cache);
 	}

@@ -33,6 +33,6 @@ namespace nif
 
 	void queue::wait_idle() const
 	{
-		vk_try(handle_.waitIdle());
+		handle_.waitIdle();
 	}
 }

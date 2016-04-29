@@ -23,9 +23,9 @@ namespace nif
 		vk::PresentModeKHR present_mode(const vector<vk::PresentModeKHR> &presentModes)
 		{
 			static map<vk::PresentModeKHR, int> modePref = {
-				{ vk::PresentModeKHR::eMailboxKHR, 3 },
-				{ vk::PresentModeKHR::eImmediateKHR, 2 },
-				{ vk::PresentModeKHR::eFifoKHR, 1 }
+				{ vk::PresentModeKHR::eMailbox, 3 },
+				{ vk::PresentModeKHR::eImmediate, 2 },
+				{ vk::PresentModeKHR::eFifo, 1 }
 			};
 
 			return set::from(presentModes)
@@ -94,7 +94,7 @@ namespace nif
 		}
 
 		cmdbuf.setImageLayout(
-			depth_stencil_image_, vk::ImageAspectFlagBits::eDepth, vk::ImageLayout::eUndefined,
+			depth_stencil_image_, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		cmdbuf.end();
 		cmdbuf.submit(cmdpool.parent_device(), {});

@@ -6,18 +6,13 @@ using namespace std;
 
 namespace nif
 {
-	descriptor_set_layout::descriptor_set_layout(const device &device) :
+	descriptor_set_layout::descriptor_set_layout(const device &device, const vector<vk::DescriptorSetLayoutBinding> &bindings) :
 		device_(device)
 	{
-		auto layoutBinding = vk::DescriptorSetLayoutBinding()
-			.descriptorType(vk::DescriptorType::eUniformBuffer)
-			.descriptorCount(1)
-			.stageFlags(vk::ShaderStageFlagBits::eVertex);
-
 		handle_ = device.create_descriptor_set_layout(
 			vk::DescriptorSetLayoutCreateInfo()
-				.bindingCount(1)
-				.pBindings(&layoutBinding));
+				.bindingCount(static_cast<uint32_t>(bindings.size()))
+				.pBindings(bindings.data()));
 	}
 
 	descriptor_set_layout::descriptor_set_layout(descriptor_set_layout &&old) :

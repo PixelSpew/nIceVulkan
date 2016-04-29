@@ -38,7 +38,7 @@ namespace nif
 		vk::ApplicationInfo appInfo;
 		appInfo.pApplicationName(name.c_str())
 			.pEngineName("nIce Framework")
-			.apiVersion(VK_API_VERSION);
+			.apiVersion(VK_MAKE_VERSION(1, 0, 8));
 
 		vector<const char*> extensions = { VK_KHR_SURFACE_EXTENSION_NAME };
 #ifdef VK_USE_PLATFORM_WIN32_KHR

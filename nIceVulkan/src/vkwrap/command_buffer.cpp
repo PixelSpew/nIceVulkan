@@ -38,7 +38,7 @@ namespace nif
 
 	void command_buffer::end()
 	{
-		vk_try(handle_.end());
+		handle_.end();
 	}
 
 	void command_buffer::submit(const device &device, const vector<reference_wrapper<semaphore>> &semaphores)

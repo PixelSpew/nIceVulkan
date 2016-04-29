@@ -14,7 +14,7 @@ namespace nif
 		uint32_t graphicsQueueIndex = static_cast<uint32_t>(
 			set::from(physical_device_.get_queue_family_properties())
 				.first_index([](const vk::QueueFamilyProperties &x) {
-					return x.queueFlags() & VK_QUEUE_GRAPHICS_BIT;
+					return x.queueFlags() & vk::QueueFlagBits::eGraphics;
 				}));
 
 		vector<float> queuePriorities = { 0.0f };
@@ -43,7 +43,7 @@ namespace nif
 
 	device::~device()
 	{
-		handle_.destroy(nullptr);
+		handle_.destroy();
 	}
 
 	vector<vk::CommandBuffer> device::allocate_command_buffers(const vk::CommandBufferAllocateInfo &allocInfo) const
@@ -89,9 +89,7 @@ namespace nif
 
 	void* device::map_memory(const vk::DeviceMemory memory, const vk::DeviceSize size) const
 	{
-		void *ret;
-		vk_try(handle_.mapMemory(memory, 0, size, vk::MemoryMapFlags(), &ret));
-		return ret;
+		return handle_.mapMemory(memory, 0, size, vk::MemoryMapFlags());
 	}
 
 	void device::unmap_memory(const vk::DeviceMemory memory) const
@@ -120,14 +118,12 @@ namespace nif
 
 	void device::bind_buffer_memory(const vk::Buffer buffer, const vk::DeviceMemory memory, const vk::DeviceSize offset) const
 	{
-		vk_try(handle_.bindBufferMemory(buffer, memory, offset));
+		handle_.bindBufferMemory(buffer, memory, offset);
 	}
 
 	vk::CommandPool device::create_command_pool(const vk::CommandPoolCreateInfo &createInfo) const
 	{
-		vk::CommandPool ret;
-		vk_try(handle_.createCommandPool(&createInfo, nullptr, &ret));
-		return ret;
+		return handle_.createCommandPool(createInfo);
 	}
 
 	void device::destroy_command_pool(const vk::CommandPool cmdpool) const
@@ -209,7 +205,7 @@ namespace nif
 
 	void device::bind_image_memory(const vk::Image image, const vk::DeviceMemory memory, const vk::DeviceSize offset) const
 	{
-		vk_try(handle_.bindImageMemory(image, memory, offset));
+		handle_.bindImageMemory(image, memory, offset);
 	}
 
 	vk::ImageView device::create_image_view(const vk::ImageViewCreateInfo &createInfo) const
