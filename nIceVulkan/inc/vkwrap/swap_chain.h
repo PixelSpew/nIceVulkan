@@ -20,7 +20,7 @@ namespace nif
 		swap_chain(const swap_chain&) = delete;
 		~swap_chain();
 		uint32_t acquire_next_image(const semaphore &semaphore) const;
-		void queuePresent(const uint32_t currentBuffer) const;
+		void queuePresent(const uint32_t currentBuffer, const std::vector<std::reference_wrapper<semaphore>> &waitSemaphores) const;
 
 		const device& parent_device() const;
 		uint32_t width() const;

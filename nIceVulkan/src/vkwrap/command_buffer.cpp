@@ -41,17 +41,23 @@ namespace nif
 		handle_.end();
 	}
 
-	void command_buffer::submit(const device &device, const vector<reference_wrapper<semaphore>> &semaphores)
+	void command_buffer::submit(const device &device, const vector<reference_wrapper<semaphore>> &waitSemaphores, const vector<vk::PipelineStageFlags> &waitStages, const vector<reference_wrapper<semaphore>> &signalSemaphores)
 	{
-		vector<vk::Semaphore> handles = set::from(semaphores)
+		vector<vk::Semaphore> waitHandles = set::from(waitSemaphores)
+			.select([](const reference_wrapper<semaphore> &x) { return x.get().handle(); })
+			.to_vector();
+		vector<vk::Semaphore> signalHandles = set::from(signalSemaphores)
 			.select([](const reference_wrapper<semaphore> &x) { return x.get().handle(); })
 			.to_vector();
 
 		device.queue().submit(
 		{
 			vk::SubmitInfo()
-				.waitSemaphoreCount(static_cast<uint32_t>(handles.size()))
-				.pWaitSemaphores(handles.data())
+				.waitSemaphoreCount(static_cast<uint32_t>(waitHandles.size()))
+				.pWaitSemaphores(waitHandles.data())
+				.pWaitDstStageMask(waitStages.data())
+				.signalSemaphoreCount(static_cast<uint32_t>(signalHandles.size()))
+				.pSignalSemaphores(signalHandles.data())
 				.commandBufferCount(1)
 				.pCommandBuffers(&handle_)
 		});
@@ -130,36 +136,26 @@ namespace nif
 		handle_.drawIndexed(indexCount, 1, 0, 0, 1);
 	}
 
-	void command_buffer::pipeline_barrier(const image &image)
+	void command_buffer::pipeline_barrier(const vk::ImageMemoryBarrier &barrier)
 	{
-		vk::ImageMemoryBarrier barrier;
-		barrier.srcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
-		barrier.dstAccessMask(static_cast<vk::AccessFlagBits>(0));
-		barrier.oldLayout(vk::ImageLayout::eColorAttachmentOptimal);
-		barrier.newLayout(static_cast<vk::ImageLayout>(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
-		barrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		barrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		barrier.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-		barrier.image(image.handle());
-
 		handle_.pipelineBarrier(
 			vk::PipelineStageFlagBits::eAllCommands,
 			vk::PipelineStageFlagBits::eTopOfPipe,
 			vk::DependencyFlags(),
-			0, nullptr,
-			0, nullptr,
-			1, &barrier);
+			{},
+			{},
+			{ barrier });
 	}
 
 	void command_buffer::setImageLayout(const image &image, const vk::ImageAspectFlags &aspectMask, const vk::ImageLayout oldImageLayout, const vk::ImageLayout newImageLayout)
 	{
-		vk::ImageMemoryBarrier imgMemBarrier;
-		imgMemBarrier.oldLayout(oldImageLayout);
-		imgMemBarrier.newLayout(newImageLayout);
-		imgMemBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		imgMemBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-		imgMemBarrier.subresourceRange(vk::ImageSubresourceRange(aspectMask, 0, 1, 0, 1));
-		imgMemBarrier.image(image.handle());
+		auto imgMemBarrier = vk::ImageMemoryBarrier()
+			.oldLayout(oldImageLayout)
+			.newLayout(newImageLayout)
+			.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+			.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+			.subresourceRange(vk::ImageSubresourceRange(aspectMask, 0, 1, 0, 1))
+			.image(image.handle());
 
 		if (oldImageLayout == vk::ImageLayout::eUndefined)
 			imgMemBarrier.srcAccessMask(vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite);

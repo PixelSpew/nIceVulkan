@@ -16,7 +16,11 @@ namespace nif
 		~command_buffer();
 		void begin();
 		void end();
-		void submit(const device &device, const std::vector<std::reference_wrapper<semaphore>> &semaphores);
+		void submit(
+			const device &device,
+			const std::vector<std::reference_wrapper<semaphore>> &waitSemaphores = {},
+			const std::vector<vk::PipelineStageFlags> &waitStages = {},
+			const std::vector<std::reference_wrapper<semaphore>> &signalSemaphores = {});
 		void begin_render_pass(const render_pass &pass, const framebuffer &framebuffer, uint32_t width, uint32_t height);
 		void end_render_pass();
 		void set_viewport(const float width, const float height);
@@ -26,7 +30,7 @@ namespace nif
 		void bind_vertex_buffer(const ibuffer &buffers);
 		void bind_index_buffer(const buffer<uint32_t> &buffer);
 		void draw_indexed(const uint32_t indexCount);
-		void pipeline_barrier(const image &image);
+		void pipeline_barrier(const vk::ImageMemoryBarrier &barrier);
 		void setImageLayout(const image &image, const vk::ImageAspectFlags &aspectMask, const vk::ImageLayout oldImageLayout, const vk::ImageLayout newImageLayout);
 
 		vk::CommandBuffer handle() const;

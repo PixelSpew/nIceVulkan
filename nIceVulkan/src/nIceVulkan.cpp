@@ -64,7 +64,16 @@ int main()
 		drawCmdBuffers[i].bind_index_buffer(sphere.meshes()[0].index_buffer());
 		drawCmdBuffers[i].draw_indexed(sphere.meshes()[0].index_count());
 		drawCmdBuffers[i].end_render_pass();
-		drawCmdBuffers[i].pipeline_barrier(wnd.swap_chain().buffers()[i].image);
+		drawCmdBuffers[i].pipeline_barrier(
+			vk::ImageMemoryBarrier()
+				.srcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+				.dstAccessMask(static_cast<vk::AccessFlagBits>(0))
+				.oldLayout(vk::ImageLayout::eColorAttachmentOptimal)
+				.newLayout(vk::ImageLayout::ePresentSrcKHR)
+				.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+				.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+				.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))
+				.image(wnd.swap_chain().buffers()[i].image.handle()));
 		drawCmdBuffers[i].end();
 	}
 
@@ -75,18 +84,28 @@ int main()
 	});
 
 	command_buffer postPresentCmdBuffer(wnd.command_pool());
+	semaphore presentCompleteSemaphore(device);
+	semaphore renderCompleteSemaphore(device);
 	wnd.draw().add([&](double delta) {
 		device.queue().wait_idle();
 
-		semaphore presentCompleteSemaphore(device);
 		uint32_t currentBuffer = wnd.swap_chain().acquire_next_image(presentCompleteSemaphore);
-		drawCmdBuffers[currentBuffer].submit(device, {});
-		wnd.swap_chain().queuePresent(currentBuffer);
+		drawCmdBuffers[currentBuffer].submit(device, { presentCompleteSemaphore }, { vk::PipelineStageFlagBits::eBottomOfPipe }, { renderCompleteSemaphore });
+		wnd.swap_chain().queuePresent(currentBuffer, { renderCompleteSemaphore });
 
 		postPresentCmdBuffer.begin();
-		postPresentCmdBuffer.pipeline_barrier(wnd.swap_chain().buffers()[currentBuffer].image);
+		postPresentCmdBuffer.pipeline_barrier(
+			vk::ImageMemoryBarrier()
+				.srcAccessMask(static_cast<vk::AccessFlagBits>(0))
+				.dstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+				.oldLayout(vk::ImageLayout::ePresentSrcKHR)
+				.newLayout(vk::ImageLayout::eColorAttachmentOptimal)
+				.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+				.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+				.subresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))
+				.image(wnd.swap_chain().buffers()[currentBuffer].image.handle()));
 		postPresentCmdBuffer.end();
-		postPresentCmdBuffer.submit(device, {});
+		postPresentCmdBuffer.submit(device);
 	});
 	wnd.run(60);
 }

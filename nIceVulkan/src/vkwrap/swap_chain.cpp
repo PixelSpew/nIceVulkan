@@ -97,7 +97,7 @@ namespace nif
 			depth_stencil_image_, vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil, vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal);
 		cmdbuf.end();
-		cmdbuf.submit(cmdpool.parent_device(), {});
+		cmdbuf.submit(cmdpool.parent_device());
 		cmdpool.parent_device().queue().wait_idle();
 
 		framebuffers_ = set::from(buffers_)
@@ -110,17 +110,23 @@ namespace nif
 		renderpass_.parent_device().destroy_swap_chain(handle_);
 	}
 
-	uint32_t swap_chain::acquire_next_image(const semaphore &semaphore) const
+	uint32_t swap_chain::acquire_next_image(const semaphore &signalSemaphore) const
 	{
-		return renderpass_.parent_device().acquire_next_image(handle_, semaphore.handle());
+		return renderpass_.parent_device().acquire_next_image(handle_, signalSemaphore.handle());
 	}
 
-	void swap_chain::queuePresent(const uint32_t currentBuffer) const
+	void swap_chain::queuePresent(const uint32_t currentBuffer, const vector<reference_wrapper<semaphore>> &waitSemaphores) const
 	{
+		vector<vk::Semaphore> waitHandles = set::from(waitSemaphores)
+			.select([](const reference_wrapper<semaphore> &x) { return x.get().handle(); })
+			.to_vector();
+
 		renderpass_.parent_device().queue().present(
 			vk::PresentInfoKHR()
 				.swapchainCount(1)
 				.pSwapchains(&handle_)
+				.waitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+				.pWaitSemaphores(waitHandles.data())
 				.pImageIndices(&currentBuffer));
 	}
 
